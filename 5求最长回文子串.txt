@@ -1,0 +1,30 @@
+马拉车算法：
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        string ss("@#");
+        for(char i:s){
+            ss.push_back(i);
+            ss.push_back('#');
+        }
+        int maxsize=0,len=ss.size(),centerIndex=0;
+        vector<int> radius(len);
+        int right=0,mid=0;
+        for(int i=1;i<len;i++){
+            if(i<right)
+                radius[i]=min(right-i,radius[2*mid-i]);
+            while(ss[i-radius[i]-1]==ss[i+radius[i]+1])
+                radius[i]++;
+            if(right<i+radius[i]){
+                mid=i;
+                right=i+radius[i];
+            }
+            if(radius[i]>maxsize){
+                maxsize=radius[i];
+                centerIndex=i;
+            }
+        }
+        int start=(centerIndex-maxsize)/2;
+        return s.substr(start,maxsize);
+    }
+};

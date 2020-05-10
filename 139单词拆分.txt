@@ -1,0 +1,41 @@
+给定一个非空字符串 s 和一个包含非空单词列表的字典 wordDict，判定 s 是否可以被空格拆分为一个或多个在字典中出现的单词。
+
+说明：
+
+    拆分时可以重复使用字典中的单词。
+    你可以假设字典中没有重复的单词。
+
+示例 1：
+
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以被拆分成 "leet code"。
+
+【思路】
+1.利用string.compare来对字符串进行比较
+2.便利wordDict中的word，与s的字串（从i开始，往前数word.size()个）进行比较，如果比较结果一致，则查看dp。
+3.i处dp[i]设置为1的条件事：从i往前数word.size()个，再往前数1个，如果该处dp也为1,则设置dp[i]=1
+4.最后只需返回dp[s.size()]即可。
+
+a.compare(i,len,str);//比较此string 的[i, i+len) 子串与 str ，相等返回0，a大返回整数，str大返回负数。
+
+
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        vector<int> dp(s.size()+1, 0);
+        dp[0] = 1;
+        for(int i=0; i<=s.size(); ++i) {
+            for(auto word: wordDict) {
+                int ws = word.size();
+                if(i - ws >= 0) {
+                    int cur = s.compare(i-ws, ws, word);
+                    if (cur==0 && dp[i-ws]==1) {
+                        dp[i] = 1;
+                    }
+                }
+            }
+        }
+        return dp[s.size()];
+    }
+};

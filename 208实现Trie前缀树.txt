@@ -1,0 +1,115 @@
+208. 实现 Trie (前缀树)
+
+实现一个 Trie (前缀树)，包含 insert, search, 和 startsWith 这三个操作。
+
+示例:
+
+Trie trie = new Trie();
+
+trie.insert("apple");
+trie.search("apple");   // 返回 true
+trie.search("app");     // 返回 false
+trie.startsWith("app"); // 返回 true
+trie.insert("app");   
+trie.search("app");     // 返回 true
+
+说明:
+
+    你可以假设所有的输入都是由小写字母 a-z 构成的。
+    保证所有输入均为非空字符串。
+
+方法一：数组，未考虑内存泄漏版
+class Trie {
+private:
+    bool isEnd=false;
+    Trie* next[26] = {nullptr};//类内直接初始化
+public:
+    /** Initialize your data structure here. */
+    Trie() {}//声明变量时已经类内初始化
+    
+    /** Inserts a word into the trie. */
+    void insert(string word) {
+        Trie* node=this;
+        for(char i:word){
+            if(node->next[i-'a']==nullptr){
+                node->next[i-'a']=new Trie();
+            }
+            node=node->next[i-'a'];
+        }
+        node->isEnd=true;
+    }
+    
+    /** Returns if the word is in the trie. */
+    bool search(string word) {
+        Trie* node=this;
+        for(char i:word){
+            if(node->next[i-'a']==nullptr)
+                return false;
+            node=node->next[i-'a'];
+        }
+        return node->isEnd;
+    }
+    
+    /** Returns if there is any word in the trie that starts with the given prefix. */
+    bool startsWith(string prefix) {
+        Trie* node=this;
+        for(char i:prefix){
+            if(node->next[i-'a']==nullptr)
+                return false;
+            node=node->next[i-'a'];
+        }
+        return true;
+    }
+};
+方法二：智能指针，防泄漏，哈希表实现，面试版
+struct TrieNode {
+    bool isEnd = false;
+    unordered_map<char, TrieNode*> next;
+    ~TrieNode() {  // 析构
+        for (auto& kv : next) {
+            if (kv.first) delete kv.second;
+        }
+    }
+};
+
+class Trie {
+private:
+    std::unique_ptr<TrieNode> root;  // 智能指针
+    
+public:
+    Trie(): root(new TrieNode()) {}
+    
+    void insert(string word) {
+        TrieNode *p = root.get();
+        for (const char c : word) {
+            if (!p->next.count(c)) {
+                p->next[c] = new TrieNode();
+            }
+            p = p->next[c];
+        }
+        p->isEnd = true;
+    }
+    
+    bool search(string word) {
+        TrieNode *p = root.get();
+        for (const char c : word) {
+            if (!p->next.count(c)) {
+                return false;
+            }
+            p = p->next[c];
+        }
+        return p->isEnd;
+    }
+    
+    bool startsWith(string prefix) {
+        TrieNode *p = root.get();
+        for (const char c : prefix) {
+            if (!p->next.count(c)) {
+                return false;
+            }
+            p = p->next[c];
+        }
+        return p != nullptr;
+    }
+};
+

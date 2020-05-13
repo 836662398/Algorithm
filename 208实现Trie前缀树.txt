@@ -61,55 +61,49 @@ public:
         return true;
     }
 };
-方法二：智能指针，防泄漏，哈希表实现，面试版
-struct TrieNode {
-    bool isEnd = false;
-    unordered_map<char, TrieNode*> next;
-    ~TrieNode() {  // 析构
-        for (auto& kv : next) {
-            if (kv.first) delete kv.second;
-        }
-    }
-};
-
+方法二：智能指针，防泄漏，面试版
 class Trie {
-private:
-    std::unique_ptr<TrieNode> root;  // 智能指针
-    
 public:
-    Trie(): root(new TrieNode()) {}
+    shared_ptr<TrieNode> root;
+    /** Initialize your data structure here. */
+    Trie():root(make_shared<TrieNode>()) {}
     
+    /** Inserts a word into the trie. */
     void insert(string word) {
-        TrieNode *p = root.get();
-        for (const char c : word) {
-            if (!p->next.count(c)) {
-                p->next[c] = new TrieNode();
+        shared_ptr<TrieNode> node=root;
+        for(char i:word){
+            int index=i-'a';
+            if(node->nexts[index]==nullptr){
+                node->nexts[index]=make_shared<TrieNode>();
             }
-            p = p->next[c];
+            node=node->nexts[index];
         }
-        p->isEnd = true;
+        node->isEnd=true;
+        
     }
     
+    /** Returns if the word is in the trie. */
     bool search(string word) {
-        TrieNode *p = root.get();
-        for (const char c : word) {
-            if (!p->next.count(c)) {
+        shared_ptr<TrieNode> node=root;
+        for(char i:word){
+            int index=i-'a';
+            if(node->nexts[index]==nullptr)
                 return false;
-            }
-            p = p->next[c];
+            node=node->nexts[index];
         }
-        return p->isEnd;
+        return node->isEnd;
     }
     
+    /** Returns if there is any word in the trie that starts with the given prefix. */
     bool startsWith(string prefix) {
-        TrieNode *p = root.get();
-        for (const char c : prefix) {
-            if (!p->next.count(c)) {
+        shared_ptr<TrieNode> node=root;
+        for(char i:prefix){
+            int index=i-'a';
+            if(node->nexts[index]==nullptr)
                 return false;
-            }
-            p = p->next[c];
+            node=node->nexts[index];
         }
-        return p != nullptr;
+        return true;
     }
 };
 

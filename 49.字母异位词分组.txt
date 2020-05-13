@@ -1,0 +1,61 @@
+给定一个字符串数组，将字母异位词组合在一起。字母异位词指字母相同，但排列不同的字符串。
+
+示例:
+
+输入: ["eat", "tea", "tan", "ate", "nat", "bat"]
+输出:
+[
+  ["ate","eat","tea"],
+  ["nat","tan"],
+  ["bat"]
+]
+
+【方法一】对于每个字符串，将其排序作为哈希表的key。
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        vector<vector<string>> res;
+        unordered_map<string,int> ump;
+        for(string s:strs){
+            string s1=s;
+            sort(s1.begin(),s1.end());
+            if(ump.count(s1)!=0){
+                res[ump[s1]].push_back(s);
+            }
+            else{
+                res.push_back(vector<string>{s});
+                ump[s1]=res.size()-1;
+            }
+        }
+        return res;
+    }
+};
+时间复杂度：O(nklogk) k为字符串长度
+
+【方法二】异位词每个字母出现次数相同，用形如“0#0#0#0#0#0#……”的字符串 来对输入字符串进行分类，作为哈希表的key。
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        vector<vector<string>> res;
+        unordered_map<string,int> ump;
+        string standard;
+        int sub=0;
+        for(int i=0;i<26;i++){
+            standard.push_back('0');
+            standard.push_back('#');
+        }
+        for(string s:strs){
+            string temp=standard;
+            for(char c:s)
+                temp[(c-'a')*2]++;
+            if(ump.count(temp)!=0)
+                res[ump[temp]].push_back(s);
+            else{
+                res.push_back(vector<string>{s});
+                ump[temp]=sub++;
+            }
+        }
+        return res;
+    }
+};
+时间复杂度：O(nk) k为字符串长度

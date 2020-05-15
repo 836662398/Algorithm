@@ -54,7 +54,7 @@ public:
             if(atop.first==""||btop.first==""||atop.first!=btop.first)
                 res.push_back(-1);
             else
-                res.push_back(findtop(a).second/findtop(b).second);//a/b=(a/top)/(b/top)
+                res.push_back(atop.second/btop.second);//a/b=(a/top)/(b/top)
         }
         return res;
     }

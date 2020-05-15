@@ -1,0 +1,116 @@
+给出方程式 A / B = k, 其中 A 和 B 均为代表字符串的变量， k 是一个浮点型数字。根据已知方程式求解问题，并返回计算结果。如果结果不存在，则返回 -1.0。
+
+示例 :
+给定 a / b = 2.0, b / c = 3.0
+问题: a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ? 
+返回 [6.0, 0.5, -1.0, 1.0, -1.0 ]
+
+输入为: vector<pair<string, string>> equations, vector<double>& values, vector<pair<string, string>> queries(方程式，方程式结果，问题方程式)， 其中 equations.size() == values.size()，即方程式的长度与方程式结果长度相等（程式与结果一一对应），并且结果值均为正数。以上为方程式的描述。 返回vector<double>类型。
+
+基于上述例子，输入如下：
+
+equations(方程式) = [ ["a", "b"], ["b", "c"] ],
+values(方程式结果) = [2.0, 3.0],
+queries(问题方程式) = [ ["a", "c"], ["b", "a"], ["a", "e"], ["a", "a"], ["x", "x"] ]. 
+
+输入总是有效的。你可以假设除法运算中不会出现除数为0的情况，且不存在任何矛盾的结果。
+
+【方法一】并查集
+class Solution {
+public:
+    unordered_map<string,pair<string,double> > par_val;//存储a的父节点root和a/root
+    pair<string,double> findtop(string a){//返回顶点a_top和a/a_top
+        if(par_val.count(a)==0)
+            return {"",-1};
+        double res=1;//res为 a/a_top
+        while(par_val[a].first!=a){
+            res*=par_val[a].second;
+            a=par_val[a].first;
+        }
+        return {a,res};
+    }
+    void Union(string a,string b,double a_b){//a_b为a/b
+        pair<string,double> a1=findtop(a);
+        pair<string,double> b1=findtop(b);
+        string atop=a1.first,btop=b1.first;
+        double a_atop=a1.second,b_btop=b1.second;
+        par_val[atop].first=btop;
+        par_val[atop].second=1/a_atop * a_b * b_btop;
+    }
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        // 并查集初始化
+        for(int i=0;i<equations.size();i++){
+            string a=equations[i][0],b=equations[i][1];
+            if(par_val.count(a)==0)
+                par_val[a]={a,1};
+            if(par_val.count(b)==0)
+                par_val[b]={b,1};
+            Union(a,b,values[i]);
+        }
+        vector<double> res;
+        for(auto q : queries){
+            string a=q[0],b=q[1];
+            pair<string,double> atop=findtop(a),btop=findtop(b);
+            if(atop.first==""||btop.first==""||atop.first!=btop.first)
+                res.push_back(-1);
+            else
+                res.push_back(findtop(a).second/findtop(b).second);//a/b=(a/top)/(b/top)
+        }
+        return res;
+    }
+};
+
+【方法二】图 + BFS，不过效率比较低，每次都需要遍历全部
+构造一个双向图，比如a/b=2.0，那么a->b权重2.0，b->a权重0.5，要查的时候就从 分子a开始进行 BFS遍历，每到一个新节点，就乘以权重，找到目标节点时返回当前值即可。
+class Solution {
+public:
+    //定义邻接矩阵：key是某个顶点，val是所有 与当前顶点相连的其它顶点 及 两点之间的边组成的pair 的集合
+    using adjmap = unordered_map<string,vector<pair<string,double>>>;
+
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        adjmap mp;
+        int len = equations.size();
+        for(int i=0;i<len;i++){
+            //获取与当前顶点a相连的顶点b，并获得a->b的距离
+            mp[equations[i][0]].push_back(make_pair(equations[i][1],values[i])); 
+            //获取与当前顶点b相连的顶点a，并获得b->a的距离           
+            mp[equations[i][1]].push_back(make_pair(equations[i][0],1/values[i]));
+        }
+        vector<double> result(queries.size());
+        //使用广度优先搜索获取任意两点之间的距离
+        for(int i=0;i<result.size();i++) result[i] = BFS(queries[i][0],queries[i][1],mp);
+        return result;
+    }
+private:
+    double BFS(string& a, string& b, adjmap& mp){
+        //筛选条件1:如果这两个顶点中的任意一个都不是邻接矩阵的key，直接return-1；
+        if(mp.find(a)==mp.end() || mp.find(b)==mp.end()) return -1.0;
+        //筛选条件2:如果输入的两个顶点是同一个，直接return1.；
+        if(a==b) return 1.0;
+        //构建队列，存放着某个 结点 和 该结点与初始结点的累积距离 组成的pair
+        queue<pair<string,double>> que;
+        //某个结点是否进入队列的依据：它是否被访问过。bool比int空间少
+        unordered_map<string,bool> visited(false);
+        //首先把起始结点push进入队列
+        que.push(make_pair(a,1.0));
+        //如果队列不为空
+        while(!que.empty()){
+            //获取头部
+            auto front = que.front();
+            visited[front.first] = true;
+            que.pop();
+            //如果头部元素的first是我们找的结点，那么直接返回second，也就是累积距离
+            if(front.first==b) return front.second;
+            //广度优先搜索：如果还没有找到，就把当前结点的邻居push进入队列
+            for(auto it:mp[front.first]){
+                //如果这个邻居没有被访问到，那么就把这个邻居 和 从起始结点到这个邻居的累积距离 push进入队列
+                if(visited[it.first]==false) que.push(make_pair(it.first,front.second*it.second));
+            }
+        }
+        //没有找到
+        return -1.0;
+    }
+};
+
+
+

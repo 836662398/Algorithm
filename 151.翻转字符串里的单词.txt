@@ -1,0 +1,76 @@
+给定一个字符串，逐个翻转字符串中的每个单词。
+
+示例 1：
+输入: "the sky is blue"
+输出: "blue is sky the"
+
+示例 2：
+输入: "  hello world!  "
+输出: "world! hello"
+解释: 输入字符串可以在前面或者后面包含多余的空格，但是反转后的字符不能包括。
+
+示例 3：
+输入: "a good   example"
+输出: "example good a"
+解释: 如果两个单词间有多余的空格，将反转后单词间的空格减少到只含一个。
+
+说明：
+
+    无空格字符构成一个单词。
+    输入字符串可以在前面或者后面包含多余的空格，但是反转后的字符不能包括。
+    如果两个单词间有多余的空格，将反转后单词间的空格减少到只含一个。
+
+【方法一】
+用流将单词划分，然后依次加在结果res前面，简洁但是string + 时间空间花费较高
+class Solution {
+public:
+    string reverseWords(string s) {
+        stringstream ss(s);
+        string str,res="";
+        while(ss>>str)
+            res=" "+str+res;
+        return res.empty()?"":string(res.begin()+1,res.end());
+    }
+};
+
+【方法二】将单词存入vector，逆序输出
+class Solution {
+public:
+    string reverseWords(string s) {
+        string str,res;
+        stringstream ss(s);
+        vector<string> strvec;
+        while(ss>>str)
+            strvec.push_back(str);
+        if(strvec.empty())   return res;
+        for(int i=strvec.size()-1;i>=0;i--){
+            res.append(strvec[i]);
+            res.append(" ");
+        }
+        res.pop_back();
+        return res;
+    }
+};
+
+【方法二】原地置换
+先将整个字符串翻转，然后依次翻转每一个单词。
+class Solution {
+public:
+    string reverseWords(string s) {
+        reverse(s.begin(),s.end());
+        int index=0,end,len=s.size();
+        for(int start=0;start<len;start++){
+            if(s[start]!=' '){
+                if(index!=0)
+                    s[index++]=' ';
+                end=start;
+                while(end<len && s[end]!=' ')
+                    s[index++]=s[end++];
+                reverse(s.begin()+index-(end-start),s.begin()+index);
+                start=end;
+            }
+        }
+        s.erase(s.begin()+index,s.end());
+        return s;
+    }
+};

@@ -1,0 +1,125 @@
+运用你所掌握的数据结构，设计和实现一个  LRU (最近最少使用) 缓存机制。它应该支持以下操作： 获取数据 get 和 写入数据 put 。
+
+获取数据 get(key) - 如果密钥 (key) 存在于缓存中，则获取密钥的值（总是正数），否则返回 -1。
+写入数据 put(key, value) - 如果密钥已经存在，则变更其数据值；如果密钥不存在，则插入该组「密钥/数据值」。当缓存容量达到上限时，它应该在写入新数据之前删除最久未使用的数据值，从而为新的数据值留出空间。
+
+进阶:
+你是否可以在 O(1) 时间复杂度内完成这两种操作？
+
+示例:
+LRUCache cache = new LRUCache( 2 /* 缓存容量 */ );
+
+cache.put(1, 1);
+cache.put(2, 2);
+cache.get(1);       // 返回  1
+cache.put(3, 3);    // 该操作会使得密钥 2 作废
+cache.get(2);       // 返回 -1 (未找到)
+cache.put(4, 4);    // 该操作会使得密钥 1 作废
+cache.get(1);       // 返回 -1 (未找到)
+cache.get(3);       // 返回  3
+cache.get(4);       // 返回  4
+
+【方法一】哈希表+双向链表list
+【思路】使用节点为pair<int,int>的双向链表list，同时用存储对应节点迭代器的哈希表来实现O(1)查询。（用pair<int,int>来代替有key,value两成员的节点Node）
+因为从哈希表中删除尾结点时，需要知道尾结点对应的key，所以链表节点必须储存key。
+class LRUCache {
+private:
+    int capacity;
+    list<pair<int,int>> mylist;
+    unordered_map<int,list<pair<int,int>>::iterator> ump;
+public:
+    LRUCache(int capacity) {
+        this->capacity=capacity;
+    }
+    int get(int key) {
+        if(ump.count(key)==0)
+            return -1;
+        auto it=ump[key];
+        //splice函数：将mylist中的it迭代器切除，加入到mylist.begin()前面
+        mylist.splice(mylist.begin(),mylist,it);//迭代器it没有改变，但是迭代器的位置变了
+        return it->second;//等价于(*it).second;注意.优先级比*高
+    }
+    void put(int key, int value) {
+        if(ump.count(key)!=0){//若已存在key
+            auto it=ump[key];
+            it->second=value;
+            mylist.splice(mylist.begin(),mylist,it);
+            return;
+        }
+        if(mylist.size()==capacity){
+            ump.erase(mylist.back().first);
+            mylist.pop_back();
+        }
+        mylist.push_front({key,value});
+        ump[key]=mylist.begin();
+    }
+};
+【方法二】哈希表+自己实现的双向链表（略复杂）
+【TIP】在双向链表实现中，可以使用一个伪头部和伪尾部两个哨兵标记界限，这样在更新的时候就不需要检查是否是 null 节点，我这边没有用，所以很麻烦。
+struct Node{
+    int key;
+    int value;
+    Node* pre;
+    Node* next;
+    Node(int x,int y):key(x),value(y),pre(NULL),next(NULL){}
+};
+class LRUCache {
+public:
+    Node* head=nullptr;
+    Node* tail=nullptr;
+    int capacity;
+    int size=0;
+    unordered_map<int,Node*> ump;
+    LRUCache(int capacity) {
+        this->capacity=capacity;
+    }
+    void moveashead(Node* node){
+        node->pre->next=node->next;
+        if(node!=tail)
+            node->next->pre=node->pre;
+        else
+            tail=node->pre;
+        head->pre=node;
+        node->next=head;
+        node->pre=nullptr;
+        head=node;
+    }
+    
+    int get(int key) {
+        if(ump.count(key)==0)
+            return -1;
+        Node* node=ump[key];
+        if(node!=head)
+            moveashead(node);
+        return node->value;
+    }
+    
+    void put(int key, int value) {
+        if(ump.count(key)!=0){
+            Node* node=ump[key];
+            node->value=value;
+            if(node!=head)
+                moveashead(node);
+            return;
+        }
+        size++;
+        Node* node=new Node(key,value);
+        if(size==1)
+            tail=node;
+        ump[key]=node;
+        if(head!=nullptr){
+            node->next=head;
+            head->pre=node;
+        }
+        head=node;
+        if(size>capacity){
+            size--;
+            Node* tmp=tail;
+            tail->pre->next=nullptr;
+            tail=tail->pre;
+            ump.erase(tmp->key);
+            delete tmp;
+        }
+    }
+};
+

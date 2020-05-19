@@ -1,0 +1,100 @@
+给定一个非负整数数组，a1, a2, ..., an, 和一个目标数，S。现在你有两个符号 + 和 -。对于数组中的任意一个整数，你都可以从 + 或 -中选择一个符号添加在前面。
+
+返回可以使最终数组和为目标数 S 的所有添加符号的方法数。
+
+示例 1:
+输入: nums: [1, 1, 1, 1, 1], S: 3
+输出: 5
+解释: 
+-1+1+1+1+1 = 3
++1-1+1+1+1 = 3
++1+1-1+1+1 = 3
++1+1+1-1+1 = 3
++1+1+1+1-1 = 3
+一共有5种方法让最终目标和为3。
+
+【方法一】dfs
+class Solution {
+public:
+    int res=0;
+    vector<int> nums;
+    int len;
+    int findTargetSumWays(vector<int>& nums, int S) {
+        this->nums=nums;
+        this->len=nums.size();
+        dfs(S,0,0);
+        return res;
+    }
+    void dfs(int S,int index,int sum){
+        if(index==len){
+            res+= sum==S? 1:0;
+            return;
+        }
+        dfs(S,index+1,sum+nums[index]);
+        dfs(S,index+1,sum-nums[index]);
+    }
+};
+
+【方法二】转化为01背包问题
+如果只是单纯的求解和为某个S的组合个数，那就是01背包。
+但是这题目中不仅有加，还有减，就得进行一个转化了。
+思路就是把整个集合看成两个子集，Q表示整个集合，P表示正数子集，N表示负数子集， T表示目标和，用SUM(X)表示集合的求和函数，集合中均为非负数，N集合是指选中这部分元素作为负数子集。
+SUM(P)−SUM(N)=T
+
+SUM(P)+SUM(N)=SUM(Q)
+
+2*SUM(P)=SUM(Q)+T
+
+也就是：正数集的和的两倍 = 等于目标和 + 序列总和
+
+所以问题就转换成了，找到一个正数集P，其和的两倍等于目标和+序列总和，转化成了01背包问题
+
+需要注意的是，序列总和不超过1000，所以可以直接省略 S>sum的情况。
+
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int S) {
+        int sum=accumulate(nums.begin(),nums.end(),0);
+        if(S>sum ||(sum+S)&1) return 0;
+        int subsum=(sum+S)/2,len=nums.size();
+        vector<int> dp(subsum+1,0);
+        dp[0]=1;
+        for(int i=0;i<len;i++){
+            for(int j=subsum;j>=nums[i];j--)
+                dp[j]+= dp[j-nums[i]];
+        }
+        return dp[subsum];
+    }
+};
+
+【方法三】动态规划
+我们用 dp[i][j] 表示用数组中的前 i 个元素，组成和为 j 的方案数。考虑第 i 个数 nums[i]，它可以被添加 + 或 -，因此状态转移方程如下：
+
+dp[i][j] = dp[i - 1][j - nums[i]] + dp[i - 1][j + nums[i]]  (i的范围为0-nums.size())
+
+basecase:dp[0][0]=1,dp[0][其他]=0.
+
+因为j可能为负，所以二维下标要处理一下：全部+sum (sum为数组和) ，处理后下标非负。
+
+空间优化：
+因为转移方程dp[i][...] 只和 dp[i - 1][...] 有关，因此我们可以优化动态规划的空间复杂度，只需要使用两个一维数组即可。
+
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int S) {
+        int sum=accumulate(nums.begin(),nums.end(),0);
+        vector<int> dp(sum*2+1,0);
+        dp[0+sum]=1;
+        if(S>sum) return 0;
+        int len=nums.size();
+        for(int i=0;i<len;i++){
+            vector<int> tmp(sum*2+1,0);
+            for(int j=-1*sum;j<=sum;j++){
+                tmp[j+sum]= (j-nums[i]+sum>=0? dp[j-nums[i]+sum]:0)   + (j+nums[i]+sum <=2*sum ?  dp[j+nums[i]+sum]:0) ;
+            }
+            dp=tmp;
+        }
+        return dp[S+sum];
+    }
+};
+

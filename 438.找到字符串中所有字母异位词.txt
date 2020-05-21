@@ -1,0 +1,96 @@
+给定一个字符串 s 和一个非空字符串 p，找到 s 中所有是 p 的字母异位词的子串，返回这些子串的起始索引。
+
+字符串只包含小写英文字母，并且字符串 s 和 p 的长度都不超过 20100。
+
+说明：
+
+    字母异位词指字母相同，但排列不同的字符串。
+    不考虑答案输出的顺序。
+
+示例 1:
+输入:
+s: "cbaebabacd" p: "abc"
+
+输出:
+[0, 6]
+解释:
+起始索引等于 0 的子串是 "cba", 它是 "abc" 的字母异位词。
+起始索引等于 6 的子串是 "bac", 它是 "abc" 的字母异位词。
+
+【方法一】用字符串统计字母出现次数
+用一个26位string存储字符串p中每个字母出现的次数，但每个字母出现次数不能超过127，一般来说足够了。
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        vector<int> res;
+        int len=p.size(),slen=s.size();
+        if(slen<len)    return res;
+        string key(26,0),tmp(26,0);
+        for(int i=0;i<len;i++){
+            key[p[i]-'a']++;
+            tmp[s[i]-'a']++;
+        }
+        if(tmp==key)
+            res.push_back(0);
+        for(int i=0;i+len<slen;i++){
+            tmp[s[i]-'a']--;
+            tmp[s[i+len]-'a']++; 
+            if(tmp==key)
+                res.push_back(i+1);
+        }
+        return res;
+    }
+};
+
+【方法二】用数组统计每个字母出现次数
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        int n = s.length();
+        int l = p.length();
+        vector<int> ans;
+        vector<int> vp(26, 0);
+        vector<int> vs(26, 0);
+        for (char c : p) vp[c - 'a']++;
+        for(int i = 0; i < n; i++){
+            if(i >= l) vs[s[i-l] - 'a']--;
+            vs[s[i] - 'a']++;
+            if(vs == vp) ans.push_back(i + 1 - l);
+        }
+        return ans;
+    }
+};
+
+【方法三】
+上面两种方法循环内每次都要判断 字符串或者数组是否相等，可以用一个变量记录字母不匹配的个数，然后每次只需判断这个变量是否为0即可，相比上两种，节约了常数时间。
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        vector<int> ans;
+        int len_s = s.length(), len_p = p.length();
+        if(len_s < len_p ) return ans;
+        vector<int> freq_s(26, 0), freq_p(26, 0);
+        for(int i=0; i<len_p; i++){
+            freq_p[p[i] - 'a']++;
+            freq_s[s[i] - 'a']++;
+        }
+        int dif = 0;
+        for(int i=0; i<26; i++){
+            if(freq_s[i] != freq_p[i])
+                dif++;
+        }
+        if(dif == 0) ans.push_back(0);
+        for(int l = 0, r = len_p; r < len_s; r++, l++){
+            freq_s[s[l] - 'a']--;
+            freq_s[s[r] - 'a']++;
+            if(s[l] != s[r]){
+                if(freq_s[s[l] - 'a'] == freq_p[s[l] - 'a']) dif--;
+                else if(freq_s[s[l] - 'a']+1 == freq_p[s[l] - 'a']) dif++;
+                if(freq_s[s[r] - 'a'] == freq_p[s[r] - 'a']) dif--;
+                else if(freq_s[s[r] - 'a']-1 == freq_p[s[r] - 'a']) dif++;
+            }
+            if(dif == 0) ans.push_back(l+1);
+        }
+        return ans;
+    }
+};

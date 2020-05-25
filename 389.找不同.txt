@@ -1,0 +1,54 @@
+给定两个字符串 s 和 t，它们只包含小写字母。
+
+字符串 t 由字符串 s 随机重排，然后在随机位置添加一个字母。
+
+请找出在 t 中被添加的字母。
+
+ 
+
+示例:
+
+输入：
+s = "abcd"
+t = "abcde"
+
+输出：
+e
+
+解释：
+'e' 是那个被添加的字母。
+
+【方法一】每一个字符都对应一个 整数，那么那个被添加的整数 的 就等于 t 的所有字符码之和 - s 的字符码之和。
+class Solution {
+public:
+    char findTheDifference(string s, string t) {
+        return (char)(accumulate(t.begin(),t.end(),0)-accumulate(s.begin(),s.end(),0));
+    }
+};
+【方法二】异或运算
+class Solution {
+public:
+    char findTheDifference(string s, string t) {
+        int result=0;
+        for(char c:s)
+            result^=c;
+        for(char c:t)
+            result^=c;
+        return (char)result;
+    }
+};
+【方法三】哈希
+class Solution {
+public:
+    char findTheDifference(string s, string t) {
+        vector<char> bucket(127,0);
+        for(char c:s)
+            bucket[c]++;
+        for(char c:t){
+            bucket[c]--;
+            if(bucket[c]<0)
+                return c;
+        }
+        return 0;
+    }
+};

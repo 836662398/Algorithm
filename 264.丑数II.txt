@@ -1,0 +1,48 @@
+编写一个程序，找出第 n 个丑数。
+
+丑数就是质因数只包含 2, 3, 5 的正整数。
+
+示例:
+
+输入: n = 10
+输出: 12
+解释: 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 是前 10 个丑数。
+
+说明:  
+
+    1 是丑数。
+    n 不超过1690。
+
+【方法一】
+    预计算 n 个丑数：
+        初始化数组 nums 和三个指针 i2，i3，i5 。
+        循环计算所有丑数。每一步：
+            在 nums[i2] * 2，nums[i3] * 3 和 nums[i5] * 5 选出最小的数字添加到数组 nums 中。
+            将该数字对应的因子指针向前移动一步。
+    在数组中返回所需的丑数。
+【TIP】三个if自动把重复的去掉，如果用else if 则需要哈希表去重。
+class Solution {
+public:
+    int nthUglyNumber(int n) {
+        vector<int> resvec={1};
+        int first=0,second=0,third=0;
+        while(resvec.size()<n){
+            int minnum=min({resvec[first]*2,resvec[second]*3,resvec[third]*5});
+            resvec.push_back(minnum);
+            if(resvec[first]*2==minnum)
+                first++;
+            if(resvec[second]*3==minnum)
+                second++;
+            if(resvec[third]*5==minnum)
+                third++;
+        }
+        return resvec[n-1];
+    }
+};
+【方法二】堆
+预计算 n 个丑数：
+    初始化预计算用到的数组 nums，堆 heap 和哈希表 seen 跟踪在堆中出现过的元素，避免重复。
+    循环计算丑数，每个步骤：
+        弹出堆中最小的数字 k 并添加到数组 nums 中。
+        若 2k，3k，5k 不存在在哈希表中，则将其添加到堆中并更新哈希表。
+

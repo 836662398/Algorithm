@@ -1,0 +1,62 @@
+字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。
+
+示例 1:
+输入: 
+first = "pale"
+second = "ple"
+输出: True
+
+示例 2:
+输入: 
+first = "pales"
+second = "pal"
+输出: False
+
+【方法一】DP
+思路同编辑距离
+class Solution {
+public:
+    bool oneEditAway(string first, string second) {
+        int len1=first.size(),len2=second.size();
+        if(abs(len1-len2)>1)    return false;
+        if(first==second)   return true;
+        vector<vector<int>> dp(len1+1,vector<int>(len2+1,0));
+        for(int i=0;i<=len2;i++)
+            dp[0][i]=i;
+        for(int i=0;i<=len1;i++)
+            dp[i][0]=i;
+        for(int i=1;i<=len1;i++){
+            for(int j=1;j<=len2;j++){
+                if(first[i-1]==second[j-1])
+                    dp[i][j]=dp[i-1][j-1];
+                else
+                    dp[i][j]=min({dp[i-1][j-1],dp[i-1][j],dp[i][j-1]})+1;
+            }
+        }
+        return dp[len1][len2]<=1;
+    }
+};
+【方法二】只有一个地方需要修改，那么不妨定位到不同字符处。有以下两种情况
+（1）leetcode 与 leetkode。
+那么我们需要找到 'c' 和 'k'，然后将‘c’和'k'都替换为空格，再比较两字符串。
+（2）leetcode 与 leetode。
+我们发现 'c' 和 'o' 不相同，然后将‘c’删除，再比较两字符串。
+class Solution {
+public:
+    bool oneEditAway(string first, string second) {
+        int len1=first.size(),len2=second.size();
+        if(abs(len1-len2)>1)    return false;
+        if(first==second)   return true;
+        int ptr=0;
+        while(first[ptr]==second[ptr])
+            ptr++;
+        if(len1==len2)
+            first[ptr]=second[ptr]=' ';
+        else if(len1>len2)
+            first.erase(first.begin()+ptr);
+        else if(len1<len2)
+            second.erase(second.begin()+ptr);
+        return first==second;
+    }
+};
+

@@ -43,3 +43,42 @@ public:
         return dp[0][len-1]>0;
     }
 };
+【方法三】博弈问题通用DP
+dp[i][j].fir 表示，对于 piles[i...j] 这部分石头堆，先手能获得的最高分数。
+dp[i][j].sec 表示，对于 piles[i...j] 这部分石头堆，后手能获得的最高分数。
+转移方程：
+dp[i][j].fir = max(piles[i] + dp[i+1][j].sec, piles[j] + dp[i][j-1].sec)
+dp[i][j].fir = max(    选择最左边的石头堆     ,     选择最右边的石头堆     )
+if 先手选择左边:
+    dp[i][j].sec = dp[i+1][j].fir
+if 先手选择右边:
+    dp[i][j].sec = dp[i][j-1].fir
+
+typedef pair<int, int> PII;
+class Solution {
+public:
+    bool stoneGame(vector<int>& piles) {
+        int k = piles.size();
+        vector<vector<PII>> dp(k, vector<PII>(k, PII(0, 0)));
+        for(int i=0; i<k; i++) {
+            dp[i][i].first = piles[i];
+            dp[i][i].second = 0;
+        }
+        for(int i=k-2; i>=0; i--) {
+            for(int j=i+1; j<k; j++) {
+                int choose_left = piles[i]+dp[i+1][j].second;
+                int choose_right =  piles[j]+dp[i][j-1].second;
+                if(choose_left >= choose_right) {
+                    dp[i][j].first = choose_left;
+                    dp[i][j].second = dp[i+1][j].first; 
+                } else {
+                    dp[i][j].first = choose_right;
+                    dp[i][j].second = dp[i][j-1].first;
+                }
+                
+            }
+        }
+        return dp[0][k-1].first > dp[0][k-1].second;
+    }
+}; 
+

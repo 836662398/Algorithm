@@ -44,41 +44,45 @@ public:
     }
 };
 【方法三】博弈问题通用DP
-dp[i][j].fir 表示，对于 piles[i...j] 这部分石头堆，先手能获得的最高分数。
-dp[i][j].sec 表示，对于 piles[i...j] 这部分石头堆，后手能获得的最高分数。
+first[i][j] 表示，对于 piles[i...j] 这部分石头堆，先手能获得的最高分数。
+second[i][j] 表示，对于 piles[i...j] 这部分石头堆，后手能获得的最高分数。
 转移方程：
-dp[i][j].fir = max(piles[i] + dp[i+1][j].sec, piles[j] + dp[i][j-1].sec)
-dp[i][j].fir = max(    选择最左边的石头堆     ,     选择最右边的石头堆     )
-if 先手选择左边:
-    dp[i][j].sec = dp[i+1][j].fir
-if 先手选择右边:
-    dp[i][j].sec = dp[i][j-1].fir
+first[i][j]=max(piles[i]+second[i+1][j],piles[j]+second[i][j-1]);
+second[i][j]=min(first[i+1][j],first[i][j-1]); (因为先手必定取自己最赚，也就是对手最亏的情况)
 
-typedef pair<int, int> PII;
 class Solution {
 public:
     bool stoneGame(vector<int>& piles) {
         int k = piles.size();
-        vector<vector<PII>> dp(k, vector<PII>(k, PII(0, 0)));
+        vector<vector<int>> first(k,vector<int>(k));
+        vector<vector<int>> second(k,vector<int>(k));
         for(int i=0; i<k; i++) {
-            dp[i][i].first = piles[i];
-            dp[i][i].second = 0;
+            first[i][i] = piles[i];
+            second[i][i] = 0;
         }
         for(int i=k-2; i>=0; i--) {
             for(int j=i+1; j<k; j++) {
-                int choose_left = piles[i]+dp[i+1][j].second;
-                int choose_right =  piles[j]+dp[i][j-1].second;
-                if(choose_left >= choose_right) {
-                    dp[i][j].first = choose_left;
-                    dp[i][j].second = dp[i+1][j].first; 
-                } else {
-                    dp[i][j].first = choose_right;
-                    dp[i][j].second = dp[i][j-1].first;
-                }
-                
+                first[i][j]=max(piles[i]+second[i+1][j],piles[j]+second[i][j-1]);
+                second[i][j]=min(first[i+1][j],first[i][j-1]);
             }
         }
-        return dp[0][k-1].first > dp[0][k-1].second;
+        return first[0][k-1] > second[0][k-1];
     }
 }; 
+
+【方法四】数学
+显然，亚历克斯总是赢得 2 堆时的游戏。 通过一些努力，我们可以获知她总是赢得 4 堆时的游戏。
+
+如果亚历克斯最初获得第一堆，她总是可以拿第三堆。 如果她最初取到第四堆，她总是可以取第二堆。第一 + 第三，第二 + 第四 中的至少一组是更大的，所以她总能获胜。
+
+我们可以将这个想法扩展到 N 堆的情况下。设第一、第三、第五、第七桩是白色的，第二、第四、第六、第八桩是黑色的。 亚历克斯总是可以拿到所有白色桩或所有黑色桩，其中一种颜色具有的石头数量必定大于另一种颜色的。
+
+因此，偶数堆时亚历克斯总能赢得比赛。
+
+class Solution {
+public:
+    bool stoneGame(vector<int>& piles) {
+        return true;
+    }
+};
 

@@ -1,0 +1,126 @@
+给定一个由 0 和 1 组成的矩阵，找出每个元素到最近的 0 的距离。
+
+两个相邻元素间的距离为 1 。
+
+示例 1:
+输入:
+
+0 0 0
+0 1 0
+0 0 0
+
+输出:
+
+0 0 0
+0 1 0
+0 0 0
+
+示例 2:
+输入:
+
+0 0 0
+0 1 0
+1 1 1
+
+输出:
+
+0 0 0
+0 1 0
+1 2 1
+
+注意:
+
+    给定矩阵的元素个数不超过 10000。
+    给定矩阵中至少有一个元素是 0。
+    矩阵中的元素只在四个方向上相邻: 上、下、左、右。
+
+【方法一】多源BFS，同腐烂橘子、地图分析
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& matrix) {
+        int ix[4]={0,1,0,-1};
+        int iy[4]={1,0,-1,0};
+        int m=matrix.size(),n=matrix[0].size();
+        vector<vector<int>> res(m,vector<int>(n));
+        int num=0;
+        queue<pair<int,int>> bfsque;
+        int count1=m*n;
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(matrix[i][j]==0){
+                    bfsque.push({i,j});
+                    count1--;
+                }
+            }
+        }
+        while(!bfsque.empty()&&count1!=0){
+            num++;
+            for(int i=bfsque.size();i>0;i--){
+                pair<int,int> tmp=bfsque.front();
+                bfsque.pop();
+                int x=tmp.first;
+                int y=tmp.second;
+                for(int j=0;j<4;j++){
+                    int dx=x+ix[j];
+                    int dy=y+iy[j];
+                    if(dx>=0&&dx<m&&dy>=0&&dy<n&&matrix[dx][dy]==1){
+                        matrix[dx][dy]=0;
+                        bfsque.push({dx,dy});
+                        res[dx][dy]=num;
+                        count1--;
+                    }
+                }
+            }
+        }
+        return res;
+    }
+};
+【方法二】DP
+对于任一点 (i,j)(i, j)(i,j)，距离 000 的距离为：
+
+f(i,j)=1+min(f(i−1,j),f(i,j−1),f(i+1,j),f(i,j+1))   if matrix[i][j] == 1
+        0                                                       if matrix[i][j] == 0
+
+因此我们用 dp[i][j]] 来表示该位置距离最近的 0 的距离。
+我们发现 dp[i][j]是由其上下左右四个状态来决定，无法从一个方向开始递推！
+
+于是我们尝试将问题分解：
+    距离 (i,j)(i, j)(i,j) 最近的 000 的位置，是在其 「左上，右上，左下，右下」4个方向之一；
+    因此我们分别从四个角开始递推，就分别得到了位于「左上方、右上方、左下方、右下方」距离 (i,j)的最近的 000 的距离，取 min 即可；
+    通过上两步思路，我们可以很容易的写出 4 个双重 for 循环，动态规划的解法写到这一步其实已经完全 OK了；
+    但从四个角开始的 4 次递推，其实还可以优化成从任一组对角开始的 2 次递推，比如只写从左上角、右下角开始递推就行了。
+        首先从左上角开始递推 dp[i][j] 是由其 「左方」和 「上方」的最优子状态决定的；
+        然后从右下角开始递推 dp[i][j] 是由其 「右方」和 「下方」的最优子状态决定的；
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& matrix) {
+        int ix[4]={0,1,0,-1};
+        int iy[4]={1,0,-1,0};
+        int m=matrix.size(),n=matrix[0].size();
+        vector<vector<int>> res(m,vector<int>(n,10000));
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(matrix[i][j]==0)
+                    res[i][j]=0;
+                else{
+                    if(i-1>=0)
+                        res[i][j]=min(res[i][j],res[i-1][j]+1);
+                    if(j-1>=0)
+                        res[i][j]=min(res[i][j],res[i][j-1]+1);
+                }
+            }
+        }
+        for(int i=m-1;i>=0;i--){
+            for(int j=n-1;j>=0;j--){
+                if(matrix[i][j]!=0){
+                    if(i+1<m)
+                        res[i][j]=min(res[i][j],res[i+1][j]+1);
+                    if(j+1<n)
+                        res[i][j]=min(res[i][j],res[i][j+1]+1);
+                }
+            }
+        }
+        return res;
+    }
+};
+

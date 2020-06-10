@@ -1,0 +1,61 @@
+在二叉树中，根节点位于深度 0 处，每个深度为 k 的节点的子节点位于深度 k+1 处。
+
+如果二叉树的两个节点深度相同，但父节点不同，则它们是一对堂兄弟节点。
+
+我们给出了具有唯一值的二叉树的根节点 root，以及树中两个不同节点的值 x 和 y。
+
+只有与值 x 和 y 对应的节点是堂兄弟节点时，才返回 true。否则，返回 false。
+
+【方法一】递归
+求出每一个节点的深度与父节点。
+class Solution {
+public:
+    unordered_map<int,TreeNode*> parent;
+    unordered_map<int,int> depth;
+    bool isCousins(TreeNode* root, int x, int y) {
+        parent[root->val]=NULL;
+        depth[root->val]=0;
+        helper(root->left,root);
+        helper(root->right,root);
+        if(depth[x]==depth[y] && parent[x]!=parent[y])
+            return true;
+        return false;
+    }
+    void helper(TreeNode *node,TreeNode *par){
+        if(!node)   return;
+        parent[node->val]=par;
+        depth[node->val]=depth[par->val]+1;
+        helper(node->left,node);
+        helper(node->right,node);
+    }
+};
+【方法二】BFS
+class Solution {
+public:
+    bool isCousins(TreeNode* root, int x, int y) {
+        if(root->val==x ||root->val==y)
+            return false;
+        queue<TreeNode*> bfsque;
+        bool x_exist=false,y_exist=false;
+        bfsque.push(root);
+        while(!bfsque.empty()){
+            for(int i=bfsque.size();i>0;i--){
+                TreeNode* tmp=bfsque.front();
+                bfsque.pop();
+                if(tmp->val==x) x_exist=true;
+                if(tmp->val==y) y_exist=true;
+                if(tmp->left &&tmp->right)
+                    if( tmp->left->val==x &&tmp->right->val==y ||tmp->left->val==y &&tmp->right->val==x )
+                    return false;
+                
+                if(tmp->left)   bfsque.push(tmp->left);
+                if(tmp->right)  bfsque.push(tmp->right);
+            }
+            if(x_exist&&y_exist)
+                return true;
+            if(x_exist||y_exist)
+                return false;
+        }
+        return false;
+    }
+};

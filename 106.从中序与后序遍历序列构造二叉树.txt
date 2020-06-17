@@ -1,0 +1,44 @@
+根据一棵树的中序遍历与后序遍历构造二叉树。
+
+注意:
+你可以假设树中没有重复的元素。
+
+例如，给出
+
+中序遍历 inorder = [9,3,15,20,7]
+后序遍历 postorder = [9,15,7,20,3]
+
+返回如下的二叉树：
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+【思路】分治
+class Solution {
+public:
+    vector<int> inorder;
+    vector<int> postorder;
+    unordered_map<int,int> memo;
+    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+        int len=inorder.size();
+        for(int i=0;i<len;i++){
+            memo[inorder[i]]=i;
+        }
+        TreeNode* root=helper(0,inorder.size()-1,0,postorder.size()-1,inorder,postorder);
+        return root;
+    }
+    TreeNode* helper(int in_start,int in_end,int post_start,int post_end,vector<int>& inorder,vector<int>& postorder){
+        if(in_start>in_end) return NULL;
+        int pivot=postorder[post_end];
+        int par=memo[pivot];//前提是无重复元素
+        int new_post_end=par-in_start+post_start-1;
+        TreeNode* left=helper(in_start,par-1,post_start,new_post_end,inorder,postorder);
+        TreeNode* right=helper(par+1,in_end,new_post_end+1,post_end-1,inorder,postorder);
+        TreeNode* root=new TreeNode(pivot);
+        root->left=left;
+        root->right=right;
+        return root;
+    }
+};

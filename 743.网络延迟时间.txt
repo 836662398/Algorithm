@@ -160,14 +160,11 @@ class Solution {
 public:
     int networkDelayTime(vector<vector<int>>& times, int N, int K) {
         const int INF = 0x3f3f3f3f;
-        vector<int> dist(N+1, INF); // 到起点的最短距离
-        vector<int> backup(N+1); // 防止串联
-
-        dist[K] = 0;
-        for (int i =0; i<=N; i++){ // 松弛N 次
-            backup.assign(dist.begin(), dist.end());
-            for (auto &t: times){ // 枚举所有边
-                dist[t[1]] = min(dist[t[1]], backup[t[0]] + t[2]); // 更新最短路
+        vector<int> distoK(N+1,INF);
+        distoK[K]=0;
+        for(int i=0;i<N;i++){
+            for(vector<int> &time:times){
+                distoK[time[1]]=min(distoK[time[1]],distoK[time[0]]+time[2]);
             }
         }
         int ans = *max_element(dist.begin() + 1, dist.end());

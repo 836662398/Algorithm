@@ -1,0 +1,205 @@
+有 N 个网络节点，标记为 1 到 N。
+
+给定一个列表 times，表示信号经过有向边的传递时间。 times[i] = (u, v, w)，其中 u 是源节点，v 是目标节点， w 是一个信号从源节点传递到目标节点的时间。
+
+现在，我们从某个节点 K 发出一个信号。需要多久才能使所有节点都收到信号？如果不能使所有节点收到信号，返回 -1。
+
+【方法一】DFS，效率很低
+class Solution {
+public:
+    unordered_map<int,int> mintime;
+    vector<vector<pair<int,int>>> timespair;
+    int num=1;
+    int networkDelayTime(vector<vector<int>>& times, int N, int K) {
+        timespair=vector<vector<pair<int,int>>>(N+1);
+        int len=times.size();
+        int res=-1;
+        for(int i=0;i<len;i++){
+            int source=times[i][0];
+            int des=times[i][1];
+            int cost=times[i][2];
+            timespair[source].push_back({des,cost});
+        }
+        for(int i=0;i<timespair.size();i++){//把时间耗费小的放前面，可以大大节约时间，否则超时
+            sort(timespair[i].begin(),timespair[i].end(),[](const pair<int,int> &a,const pair<int,int> &b){return a.second<b.second;});
+        }
+        mintime[K]=0;
+        dfs(0,K);
+        if(num<N)   return -1;
+        for(pair<int,int> p: mintime){
+            if(p.second>res)
+                res=p.second;
+        }
+        return res;
+    }
+    void dfs(int time,int source){
+        for(int i=0;i<timespair[source].size();i++){
+            int des=timespair[source][i].first;
+            int cost=timespair[source][i].second;
+            if(mintime.count(des)){
+                if(time+cost>=mintime[des])
+                    continue;
+            }
+            else
+                num++;
+            mintime[des]=time+cost;
+            dfs(time+cost,des);
+        }
+    }
+};
+
+【方法二】朴素dijkstra （适合稠密图）
+这题可以转化为求点K可以到达的最远距离，也就是单源最短路径
+class Solution {
+public:
+
+    int networkDelayTime(vector<vector<int>>& times, int n, int K) {
+        const int INF = 0x3f3f3f3f;
+        vector<vector<int>> g(n+1, vector<int>(n+1, INF));
+        for (auto &v: times){
+            g[v[0]][v[1]] = v[2];
+        }
+        vector<int> dist(n+1, INF); // 距离起始点的最短距离
+        vector<bool> st(n+1, false); // 是否已经得到最优解
+
+        dist[K] = 0; // 起始点
+        for (int i = 0; i< n - 1; i++ ){
+            int t = -1;
+            for (int j = 1; j <=n; j++){ // 在还未确定最短路的点中，寻找到起始点距离最小的点 的点
+                if (!st[j] && (t == -1 || dist[t] > dist[j])){ 
+                    t = j;
+                }
+            }
+
+            st[t] = true; // t号点的最短路已经确定
+
+            for (int j = 1; j<=n; j++){ // 用t更新其他点的距离
+                dist[j] = min(dist[j], dist[t] + g[t][j]); 
+            }
+        }
+        int ans = *max_element(dist.begin()+1, dist.end());
+        return ans == INF ? -1: ans;
+    }
+};
+时间复杂度：O(v²),v为节点数，适合稠密图
+
+【方法三】二叉堆优化dijkstra （适合稀疏图）
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int N, int K) {
+        typedef pair<int, int> PII; // first:距离; second: 几号点
+        vector<bool> st(N+1, false); // 是否已得到最短距离
+        vector<int> dist(N+1, INT_MAX); // 距离起始点的最短距离
+        unordered_map<int, vector<PII>> graph; // 邻接表；u->v,权重w
+        priority_queue<PII, vector<PII>, greater<PII>> heap; // 小顶堆；维护到起始点的最短距离和点
+
+        for (auto &t: times){ // 初始化邻接表
+            graph[t[0]].push_back({t[2],t[1]});
+        }
+        heap.push({0, K});
+        dist[K] = 0;
+        while(heap.size()){
+            auto t = heap.top();
+            heap.pop();
+            int ver = t.second, distance = t.first;
+            if (st[ver]) continue; // 之前更新过，是冗余备份
+            st[ver] = true;
+            for (auto &p: graph[ver]){
+                if (dist[p.second] > distance + p.first){ // 用t去更新其他点到起始点的最短距离
+                    dist[p.second] = distance + p.first;
+                    heap.push({dist[p.second], p.second});
+                }
+            }
+        }
+        int ans = *max_element(dist.begin()+1, dist.end());
+        return ans == INT_MAX ? -1: ans;
+    }
+};
+时间复杂度：O(elge) ,e为边数，适合稀疏图
+
+【方法三】SPFA
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int N, int K) {
+        const int INF = 0x3f3f3f3f;
+        typedef pair<int, int> PII; // first:距离; second: 几号点
+        vector<int> dist(N+1, INF); // 距离起始点的最短距离
+        dist[K]=0;//初始点，容易忘
+        vector<vector<PII>> graph(N+1); // 邻接表；u->v,权重w
+        for (auto &t: times){ // 初始化邻接表
+            graph[t[0]].push_back({t[2],t[1]});
+        }
+        queue<int> modifyque;
+        modifyque.push(K);
+        vector<bool> st(N+1, false); // 是否在队列中,避免重复进队列
+        st[K] = true; 
+        while(!modifyque.empty()){
+            int tmp=modifyque.front();
+            modifyque.pop();
+            st[tmp]=false;
+            for(PII &p:graph[tmp]){
+                int cost=p.first;
+                int dest=p.second;
+                if(dist[tmp]+cost<dist[dest]){
+                    dist[dest]=dist[tmp]+cost;
+                    if(!st[dest]){
+                        modifyque.push(dest);
+                        st[dest]=true;
+                    }
+                }
+            }
+        }
+        int ans = *max_element(dist.begin()+1, dist.end());
+        return ans == INF ? -1: ans;
+    }
+};
+时间复杂度：一般O(e)，最坏O(ve)
+
+【方法四】Bellmon-Ford算法
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int N, int K) {
+        const int INF = 0x3f3f3f3f;
+        vector<int> dist(N+1, INF); // 到起点的最短距离
+        vector<int> backup(N+1); // 防止串联
+
+        dist[K] = 0;
+        for (int i =0; i<=N; i++){ // 松弛N 次
+            backup.assign(dist.begin(), dist.end());
+            for (auto &t: times){ // 枚举所有边
+                dist[t[1]] = min(dist[t[1]], backup[t[0]] + t[2]); // 更新最短路
+            }
+        }
+        int ans = *max_element(dist.begin() + 1, dist.end());
+        return ans > INF/2 ? -1: ans; // INF/2 是因为可能有负权边；这个题没有负权边，可以用INF
+    }
+};
+时间复杂度：O(ve)
+
+【方法五】floyd算法
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int N, int K) {
+        const int INF = 0x3f3f3f3f;
+        vector<vector<int>> d(N+1, vector<int>(N+1, INF));
+        for (int i = 1; i<=N; i++) d[i][i] = 0;
+
+        for (auto &t: times){
+            d[t[0]][t[1]] = min(d[t[0]][t[1]], t[2]);
+        }
+
+        for (int k = 1; k<=N; k++){
+            for (int i = 1; i<=N; i++){
+                for (int j =1; j<=N; j++){
+                    d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+                }
+            }
+        }
+        int ans = 0;
+        for (int i =1; i<=N; i++){
+            ans = max(ans, d[K][i]);
+        }
+        return ans > INF/2 ? -1: ans;
+    }
+};
+时间复杂度：O(v^3)

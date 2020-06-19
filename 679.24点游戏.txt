@@ -1,0 +1,71 @@
+你有 4 张写有 1 到 9 数字的牌。你需要判断是否能通过 *，/，+，-，(，) 的运算得到 24。
+
+示例 1:
+
+输入: [4, 1, 8, 7]
+输出: True
+解释: (8-4) * (7-1) = 24
+
+示例 2:
+
+输入: [1, 2, 1, 2]
+输出: False
+
+注意:
+
+    除法运算符 / 表示实数除法，而不是整数除法。例如 4 / (1 - 2/3) = 12 。
+    每个运算符对两个数进行运算。特别是我们不能用 - 作为一元运算符。例如，[1, 1, 1, 1] 作为输入时，表达式 -1 - 1 - 1 - 1 是不允许的。
+    你不能将数字连接在一起。例如，输入为 [1, 2, 1, 2] 时，不能写成 12 + 12 。
+
+【思路】回溯
+只有 4 张牌，且只能执行 4 种操作。
+即使所有运算符都不进行交换，最多也只有 12∗6∗2∗4∗4∗4=9216 种可能性，这使得我们可以尝试所有这些可能。
+
+具体来说，我们有 12 种方式先选出两个数字（有序），并执行 4 种操作之一（12 * 4）。
+然后，剩下 3 个数字，我们从中选择 2 个并执行 4 种操作之一（6 * 4）。
+
+最后我们剩下两个数字，并在 2 * 4 种可能之中作出最终选择。
+
+我们将对我们的数字或结果数字执行 3 次二元运算（+，-，*，/ 是运算）。
+因为 - 和 / 不满足交换律，我们必须仔细考虑 a / b 和 b / a。
+
+对于在我们的列表中移除 a, b 这两个数字的每一种方法，以及它们可能产生的每种结果，如 a + b、a / b等，
+我们将采用递归的方法解决这个较小的数字列表上的问题。
+
+
+class Solution {
+public:
+    bool judgePoint24(vector<int>& nums) {
+        vector<double> nums1(nums.begin(),nums.end());
+        return dfs(nums1);
+    }
+    bool dfs(vector<double>& nums){
+        int len=nums.size();
+        if(len==1)  return abs(nums[0]-24)<1e-6;
+        for(int i=0;i<len;i++){
+            for(int j=0;j<len;j++){
+                if(i==j)
+                    continue;
+                vector<double> nums2;
+                for(int k=0;k<len;k++)
+                    if(k!=i&&k!=j)
+                        nums2.push_back(nums[k]);
+                for(int k=0;k<4;k++){
+                    if(k < 2 && j < i) continue;
+                    if(k==0)   nums2.push_back(nums[i]+nums[j]);
+                    if(k==1)   nums2.push_back(nums[i]*nums[j]);
+                    if(k==2)   nums2.push_back(nums[i]-nums[j]);
+                    if(k==3)
+                        if(nums[j]!=0)
+                            nums2.push_back(nums[i]/nums[j]);
+                        else
+                            continue;
+                    if(dfs(nums2))  return true;
+                    nums2.pop_back();
+                }
+                
+            }
+        }
+        return false;
+    }
+};

@@ -1,0 +1,51 @@
+有 n 个城市通过 m 个航班连接。每个航班都从城市 u 开始，以价格 w 抵达 v。
+
+现在给定所有的城市和航班，以及出发城市 src 和目的地 dst，你的任务是找到从 src 到 dst 最多经过 k 站中转的最便宜的价格。 如果没有这样的路线，则输出 -1。
+
+
+【方法一】Bellman-Ford算法，限制边数为K+1
+class Solution {
+public:
+    int findCheapestPrice(int n, vector<vector<int>>& flights, int src, int dst, int K) {
+        const int INF=0x3f3f3f3f;
+        vector<int> dis(n,INF);
+        dis[src]=0;
+        for(int i=0;i<=K;i++){
+            vector<int> pre=dis;
+            for(auto flight:flights){
+                dis[flight[1]]=min(dis[flight[1]],pre[flight[0]]+flight[2]);
+            }
+        }
+        return dis[dst]==INF?-1:dis[dst];
+    }
+};
+时间复杂度：O(KE)
+
+【方法二】BFS
+class Solution {
+public:
+    int findCheapestPrice(int n, vector<vector<int>>& flights, int src, int dst, int K) {
+        const int INF=0x3f3f3f3f;
+        typedef pair<int,int> PII;//first为目标点，second为费用
+        vector<vector<PII>> edges(n);
+        for(auto &flight:flights)//邻接表
+            edges[flight[0]].push_back({flight[1],flight[2]});
+        vector<int> distosrc(n,INF);
+        distosrc[src]=0;
+        queue<PII> myque;
+        myque.push({src,0});
+        int time=K;
+        while(time-->=0&&myque.size()){
+            for(int i=myque.size();i>0;i--){
+                auto tmp=myque.front(); myque.pop();
+                for(auto &edge:edges[tmp.first]){
+                    int next=edge.first,fee=edge.second+tmp.second;
+                    if(fee>distosrc[next])  continue;
+                    distosrc[next]=fee;
+                    myque.push({next,fee});
+                }
+            }
+        }
+        return distosrc[dst]==INF?-1:distosrc[dst];
+    }
+};

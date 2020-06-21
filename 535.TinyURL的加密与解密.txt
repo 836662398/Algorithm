@@ -1,0 +1,44 @@
+TinyURL是一种URL简化服务， 
+比如：当你输入一个URL https://leetcode.com/problems/design-tinyurl 时，它将返回一个简化的URL http://tinyurl.com/4e9iAk.
+
+要求：设计一个 TinyURL 的加密 encode 和解密 decode 的方法。
+你的加密和解密算法如何设计和运作是没有限制的，你只需要保证一个URL可以被加密成一个TinyURL，并且这个TinyURL可以用解密方法恢复成原本的URL。
+
+【思路】
+加密算法是不可能将原始数据变少的，因此短网址服务需要建立数据库映射，要考虑不重复，高效加密等问题。
+先将字符串进行哈希，再将得到的数字映射到一个62进制的字符串，使用哈希表进行映射。
+class Solution {
+public:
+    unordered_map<string,string> hashmap;
+    using ull=unsigned long long;
+    string code="0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
+    int len=code.size();
+    ull hashcode(string &s){
+        ull n=11,hash=0;
+        for(char c:s){
+            hash=hash*n+c;//字符串常用哈希函数，n取质数
+        }
+        return hash;
+    }
+    string ulltostring(ull a){
+        string res;
+        while(a>0){
+            res.push_back(code[a%len]);
+            a/=len;
+        }
+        return res;
+    }
+    string encode(string longUrl) {
+        string shortUrl=ulltostring(hashcode(longUrl));
+        hashmap[shortUrl]=longUrl;
+        cout<<shortUrl;
+        return shortUrl;
+    }
+
+    string decode(string shortUrl) {
+        return hashmap[shortUrl];
+    }
+};
+
+
+

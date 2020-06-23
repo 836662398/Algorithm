@@ -1,0 +1,116 @@
+给定一个非空数组，数组中元素为 a0, a1, a2, … , an-1，其中 0 ≤ ai < 231 。
+
+找到 ai 和aj 最大的异或 (XOR) 运算结果，其中0 ≤ i,  j < n 。
+
+你能在O(n)的时间解决这个问题吗？
+
+示例:
+
+输入: [3, 10, 5, 25, 2, 8]
+
+输出: 28
+
+解释: 最大的结果是 5 ^ 25 = 28.
+
+【方法一】哈希表储存前缀
+首先计算数组中最大数的二进制长度 LLL。
+
+初始化 max_xor = 0。
+
+从 i=L−1遍历到 i=0（代表着从最左侧的比特位 L−1遍历到最右侧的比特位 000）：
+
+    将 max_xor 左移，释放出下一比特位的位置。
+
+    初始化 curr_xor = max_xor | 1（即将 max_xor 最右侧的比特置为 1）。
+
+    遍历 nums，计算出长度为 L−i的所有可能的按位前缀。
+        将长度为 L−i的按位前缀加入哈希集合 prefixes，按位前缀的计算公式如下：num >> i。
+
+    遍历所有可能的按位前缀，检查是否存在 p1，p2 使得 p1^p2 == curr_xor。比较简单的做法是检查每个 p，看 curr_xor^p 是否存在。如果存在，就将 max_xor 改为 curr_xor（即将 max_xor 最右侧的比特位改为 1）。如果不存在，max_xor 最右侧的比特位继续保持为 0。
+
+class Solution {
+public:
+    int findMaximumXOR(vector<int>& nums) {
+        int maxnum=*max_element(nums.begin(),nums.end());
+        int len=0;
+        while(maxnum>0){
+            maxnum>>=1;
+            len++;
+        }
+        int maxXOR=0,curXOR;
+        unordered_set<int> hashset;
+        for(int i=len-1;i>=0;i--){
+            maxXOR<<=1;
+            curXOR=maxXOR|1;
+            hashset.clear();
+            for(int num:nums)
+                hashset.insert(num>>i);
+            for(int p:hashset){
+                if(hashset.count(curXOR^p)){
+                    maxXOR=curXOR;
+                    break;
+                }
+            }
+        }
+        return maxXOR;
+    }
+};
+
+【方法二】字典树
+算法结构如下所示：
+
+    在按位字典树中插入数字。
+
+    找到插入数字在字典树中所能得到的最大异或值。
+
+算法的具体实现如下所示：
+
+    将所有数字转化成二进制形式。
+
+    将数字的二进制形式加入字典树，同时计算该数字在字典树中所能得到的最大异或值。再用该数字的最大异或值尝试性更新 max_xor。
+
+    返回 max_xor。
+
+class Solution {
+public:
+    struct Node
+    {
+        Node* next[2]={nullptr};
+    };
+    void insert(int len,int num,Node* root){
+        for(int i=len-1;i>=0;i--){
+            int k=(num>>i)&1;
+            if(!root->next[k])
+                root->next[k]=new Node();
+            root=root->next[k];
+        }
+    }
+    int findMaximumXOR(vector<int>& nums) {
+        int maxnum=*max_element(nums.begin(),nums.end());
+        int len=0;
+        while(maxnum>0){
+            maxnum>>=1;
+            len++;
+        }
+        Node* root=new Node();
+        for(int num:nums)
+            insert(len,num,root);
+        int res=0,tmp=0;
+        Node *node=root;
+        for(int num:nums){
+            node=root;
+            tmp=0;
+            for(int i=len-1;i>=0;i--){
+                int k=(num>>i)&1;
+                if(node->next[!k]){
+                    node=node->next[!k];
+                    tmp+=(1<<i);
+                }
+                else
+                    node=node->next[k];
+            }
+            res=max(res,tmp);
+        }
+        return res;
+    }
+};

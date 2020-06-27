@@ -1,0 +1,70 @@
+给定一个字符串 s，你可以通过在字符串前面添加字符将其转换为回文串。找到并返回可以用这种方式转换的最短回文串。
+
+示例 1:
+输入: "aacecaaa"
+输出: "aaacecaaa"
+
+示例 2:
+输入: "abcd"
+输出: "dcbabcd"
+
+【方法一】马拉车算法
+class Solution {
+public:
+    string shortestPalindrome(string s) {
+        int len=s.size();
+        string ss="@#";
+        for(char c:s)
+            ss.append(c+string("#"));
+        int len2=ss.size();
+        vector<int> radius(len2,0);
+        int right=0,pivot=0;
+        int maxpivot=0;
+        for(int i=1;i<=len2/2;i++){
+            if(i<=right)
+                radius[i]=min(right-i,radius[2*pivot-i]);
+            while(ss[i+radius[i]+1]==ss[i-radius[i]-1]){
+                radius[i]++;
+            }
+            if(right<i+radius[i]){
+                pivot=i;
+                right=i+radius[i];
+            }
+            if(i-radius[i]==1)   maxpivot=i;
+        }
+        string prefix=s.substr(maxpivot-1);
+        reverse(prefix.begin(),prefix.end());
+        return prefix+s;   
+    }
+};
+【方法二】KMP算法
+对于s=aacecaaba翻转后得s_reverse=abaacecaa那么两个字符串拼接s_reverse+s一定是回文串，但不一定是最短的回文串，
+要想得到最短的回文串，只需要将s的前缀和s_reverse的后缀最大重复部分（即aacecaa）合并就得到最短回文串。
+
+这就联想到KMP算法中的next数组，就是用来查找一个字符串的前缀和后缀相同的长度的最大值，
+因为查找的是s的前缀和s_reverse的后缀相同的部分，所以s+s_reverse拼接得到新串，然后求得新串的next数组即可，
+但是我们所求的前缀是不能超过中点的，因此用一个特殊字符隔开。
+
+最后将s_reverse与s非重复重复部分截取拼接上s就是最短回文串结果。
+class Solution {
+public:
+    string shortestPalindrome(string s) {
+        string s_rev=s;
+        reverse(s_rev.begin(),s_rev.end());
+        string ss=s+"#"+s_rev;
+        int len=ss.size(),len2=s.size();
+        int next[len+1];
+        int t=next[0]=-1;
+        int j=0;
+        while(j<len){
+            if(t==-1 ||ss[j]==ss[t] ){
+                t++;
+                j++;
+                next[j]=t;
+            }
+            else
+                t=next[t];
+        }
+        return ss.substr(len2+1,len2-next[len])+s;
+    }
+};

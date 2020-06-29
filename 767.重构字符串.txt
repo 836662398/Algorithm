@@ -1,0 +1,87 @@
+给定一个字符串S，检查是否能重新排布其中的字母，使得两相邻的字符不同。
+
+若可行，输出任意可行的结果。若不可行，返回空字符串。
+
+示例 1:
+
+输入: S = "aab"
+输出: "aba"
+
+示例 2:
+
+输入: S = "aaab"
+输出: ""
+
+注意:
+    S 只包含小写字母并且长度在[1, 500]区间内。
+
+【方法一】轮转排入，最优
+class Solution {
+public:
+    using PCI=pair<char,int>;
+    string reorganizeString(string S) {
+        //记录字母数并降序排列
+        vector<PCI> hash(26);
+        for(int i=0;i<26;i++)
+            hash[i]={i+'a',0};
+        for(char c:S)
+            hash[c-'a'].second++;
+        //按降序出现次数排列，可优化：其实只需将出现次数最大的放到第一位即可
+        sort(hash.begin(),hash.end(),[](const PCI& a,const PCI &b){ return a.second>b.second;});
+        int size=hash[0].second;
+        //判断是否能够重构
+        if(size>(S.size()+1)/2)   return "";
+        
+        //答案有size个字符串拼接而成，轮转排入。
+        vector<string> ans(size);
+        int l=0;
+        for(int i=0;i<26;i++){
+            int n=hash[i].second;
+            char c=hash[i].first;
+            for(int j=0;j<n;j++){
+                ans[l++ % size].push_back(c);
+            }
+        }
+
+        string res;
+        for(string s:ans){
+            res+=s;
+        }
+        return res;
+    }
+};
+
+【方法二】贪心+堆
+在堆中存储 (count, letter) 这种格式的元素。
+每次从堆中弹出两个元素出来（代表两个剩余次数最大和第二大的字符），接着将这两个字符中与之前输出字符不同，出现次数最大的字符输出。
+之后把重新计算的剩余次数和字符再压入栈中。
+
+最后，堆中可能会剩下一个元素，这个元素出现次数一定是 1。如果不是的话，那就不可能有这种排列。
+class Solution {
+public:
+    using PIC=pair<int,char>;
+    string reorganizeString(string S) {
+        int len=S.size();
+        unordered_map<char,int> memo;
+        for(char c:S)
+            memo[c]++;
+        priority_queue<PIC,vector<PIC>,less<PIC>> pq;
+        for(pair<char,int> p:memo)
+            pq.push({p.second,p.first});
+        int maxlen=pq.top().first;
+        if(maxlen>(len+1)/2)    return "";
+        string res;
+        while(pq.size()>1){
+            PIC t1=pq.top(); pq.pop();
+            PIC t2=pq.top(); pq.pop();
+            res.push_back(t1.second);
+            res.push_back(t2.second);
+            if(--t1.first>0)    pq.push(t1);
+            if(--t2.first>0)    pq.push(t2);
+        }
+        if(pq.size())
+            res.push_back(pq.top().second);
+        return res;
+    }
+};
+

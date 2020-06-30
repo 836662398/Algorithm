@@ -1,0 +1,72 @@
+编写一段程序来查找第 n 个超级丑数。
+
+超级丑数是指其所有质因数都是长度为 k 的质数列表 primes 中的正整数。
+
+示例:
+
+输入: n = 12, primes = [2,7,13,19]
+输出: 32 
+解释: 给定长度为 4 的质数列表 primes = [2,7,13,19]，前 12 个超级丑数序列为：[1,2,4,7,8,13,14,16,19,26,28,32] 。
+
+说明:
+    1 是任何给定 primes 的超级丑数。
+     给定 primes 中的数字以升序排列。
+    0 < k ≤ 100, 0 < n ≤ 106, 0 < primes[i] < 1000 。
+    第 n 个超级丑数确保在 32 位有符整数范围内。
+
+【方法一】超级丑数均为结果集合中的每个数和素数集合中的每个数相乘的结果。
+维护一个数组index[i]记录当前素数集合中的第i个数下一次需要乘结果集合中哪个下标对应的数,
+每次遍历，找到所有素数集合中乘上结果集合中的数对应的最小的数，加入结果集合。
+同时，更新该加入结果集合的素数对应的应乘结果集合的下标，后移一位。
+遍历n-1次，结果集合必然有序。
+
+class Solution {
+public:
+    int nthSuperUglyNumber(int n, vector<int>& primes) {
+        int len=primes.size();
+        vector<int> res={1};
+        vector<int> index(len,0);
+        while(res.size()<n){
+            int tmp=INT_MAX;
+            for(int i=0;i<len;i++){
+                tmp=min(tmp,primes[i]*res[index[i]]);
+            }
+            for(int i=0;i<len;i++){
+                if(tmp==primes[i]*res[index[i]])
+                    index[i]++;
+            }
+            res.push_back(tmp);
+        }
+        return res[n-1];
+    }
+};
+
+【方法二】堆
+class Solution {
+public:
+    int nthSuperUglyNumber(int n, vector<int>& primes) {
+        ////先把1放进去，然后1*prime也都是丑数
+        ////对于每一个丑数x,x*prime都是丑数
+        ////set用来去重，priority_queue用来每次弹出最小数
+        priority_queue<int,vector<int>, greater<int>> pq;
+        set<int> se;
+        pq.push(1);se.insert(1);
+        int minn;
+        while(!pq.empty()&&n){
+            minn = pq.top();pq.pop();n--;
+            ////一个丑数的兄弟全都推进去
+            for(int i=0;i<primes.size();++i){
+                ////防范整数溢出的小条件
+                if(minn<pow(2,31)/primes[i]){
+                    int toPush = primes[i]*minn;
+                    if(se.find(toPush)==se.end()){//没有插入过
+                        pq.push(toPush);
+                        se.insert(toPush);}
+                }
+            }
+        }
+        return minn;
+    }
+};
+
+

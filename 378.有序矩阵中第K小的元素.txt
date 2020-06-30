@@ -1,0 +1,97 @@
+给定一个 n x n 矩阵，其中每行和每列元素均按升序排序，找到矩阵中第 k 小的元素。
+请注意，它是排序后的第 k 小元素，而不是第 k 个不同的元素。
+
+
+示例：
+matrix = [
+   [ 1,  5,  9],
+   [10, 11, 13],
+   [12, 13, 15]
+],
+k = 8,
+返回 13。
+
+提示：
+你可以假设 k 的值永远是有效的，1 ≤ k ≤ n2 。
+
+【方法一】二分查找
+该矩阵一个特点是，能在2n=O(n)时间内找到比任意某个数x小的数的个数：
+以列为单位找，找到每一列最后一个<=mid的数即知道每一列有多少个数<=mid
+
+主函数思路：
+第k小的数字意味着小于等于它的元素一共有k个，大于它的数字有n*n-k个。假设某个数为mid
+    如果小于等于mid的元素个数小于k，说明mid不是第k小的数，比mid小的数就更不可能是了。所以第k小的数至少是mid + 1。
+    如果小于等于mid的元素个数大于等于k，说明mid可能为第k小的数，比它小的数也有可能是答案。
+这就是二分法的思路。假定查找的范围为[left, right]，首先计算int mid = left + (right - left) / 2;
+然后在矩阵中计数有多少个元素小于等于mid，这个数量为count。
+    如果count < k，那么第k小的数至少为mid + 1，所以left = mid + 1。
+    反之，right = mid。
+    循环结束的条件为left >= right，此时left即为答案。
+class Solution {
+public:
+    int kthSmallest(vector<vector<int>>& matrix, int k) {
+        int n=matrix.size();
+        int right=matrix[n-1][n-1],left=matrix[0][0];
+        while(left<right){
+            // 每次循环都保证第K小的数在start~end之间，当start==end，第k小的数就是start
+            int mid=(left+right)/2;
+            // 找二维矩阵中<=mid的元素总个数
+            int cnt=NotBiggerThan(matrix,mid);
+            if(cnt<k)
+                // 第k小的数在右半部分，且不包含mid
+                left=mid+1;
+            else
+                // 第k小的数在左半部分，可能包含mid
+                right=mid;
+        }
+        return left;
+    }
+    int NotBiggerThan(vector<vector<int>>& matrix,int x){
+        int n=matrix.size();
+        int i=n-1,j=0;
+        int res=0;
+        while(i>=0&&j<n){
+            if(matrix[i][j]<=x){
+                // 第j列有i+1个元素<=mid
+                res+=i+1;
+                j++;
+            }
+            else
+                // 第j列目前的数大于mid，需要继续在当前列往上找
+                i--;
+        }
+        return res;
+    }
+};
+
+【方法二】外部排序
+归并排序思想的运用：普通归并排序是两个有序数组合并，这道题相当于N个有序数组合并，
+因此需要N个指针，归并到第K个元素就退出，用堆对N个指针排序。
+using  PII=pair<int,int> ;
+vector<vector<int>> m;
+struct cmp{
+    bool operator()(const PII &a,const PII &b){
+        return m[a.first][a.second]>m[b.first][b.second];
+    }
+};
+class Solution {
+public:
+    int kthSmallest(vector<vector<int>>& matrix, int k) {
+        int n=matrix.size();
+        m=move(matrix);
+        vector<PII> vec;
+        for(int i=0;i<n;i++)
+            vec.push_back({i,0});
+        priority_queue<PII,vector<PII>,cmp> pq(vec.begin(),vec.end());//O(n)建堆，如果一个一个插入的话为O(nlogn)
+        int res;
+        while(--k){
+            int row=pq.top().first;
+            int col=pq.top().second;
+            pq.pop();
+            if(col+1<n)
+                pq.push({row,col+1});
+        }
+        return m[pq.top().first][pq.top().second];
+    }
+};
+

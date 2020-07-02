@@ -63,7 +63,7 @@ public:
         return res;
     }
 };
-
+时间复杂度：O(nlog(righr-left)),(right=matrix[n-1][n-1],left=matrix[0][0])
 【方法二】外部排序
 归并排序思想的运用：普通归并排序是两个有序数组合并，这道题相当于N个有序数组合并，
 因此需要N个指针，归并到第K个元素就退出，用堆对N个指针排序。
@@ -94,4 +94,4 @@ public:
         return m[pq.top().first][pq.top().second];
     }
 };
-
+时间复杂度O(n+klogn)

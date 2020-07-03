@@ -1,0 +1,103 @@
+请实现两个函数，分别用来序列化和反序列化二叉树。
+
+示例: 
+
+你可以将以下二叉树：
+
+    1
+   / \
+  2   3
+     / \
+    4   5
+
+序列化为 "[1,2,3,null,null,4,5]"
+
+【方法一】先序遍历
+class Codec {
+public:
+
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        string res;
+        stack<TreeNode*> sta;
+        sta.push(root);
+        while(sta.size()){
+            auto tmp=sta.top(); sta.pop();
+            if(!tmp){
+                res+="# ";
+                continue;
+            }
+            res+=to_string(tmp->val)+" ";
+            sta.push(tmp->right);
+            sta.push(tmp->left);
+        }
+        res.pop_back();
+        return res;
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        stringstream ss(data);
+        return helper(ss);
+    }
+    TreeNode* helper(stringstream& ss){//流无法拷贝
+        string a;
+        ss>>a;
+        if(a=="#")  return nullptr;
+        auto root=new TreeNode(stoi(a));
+        root->left=helper(ss);
+        root->right=helper(ss);
+        return root;
+    }
+};
+
+【方法二】层次遍历
+class Codec {
+public:
+
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        queue<TreeNode*> bfs;
+        bfs.push(root);
+        string res;
+        while(bfs.size()){
+            auto tmp=bfs.front();   bfs.pop();
+            if(!tmp){
+                res+="# ";
+                continue;
+            }
+            res+=to_string(tmp->val)+" ";
+            bfs.push(tmp->left);
+            bfs.push(tmp->right);
+        }
+        return res;
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        if(data=="# ")  return NULL;
+        stringstream ss(data);
+        string str;
+        vector<string> arr;
+        while(ss>>str)
+            arr.push_back(str);
+        queue<TreeNode*> bfsque;
+        auto root=new TreeNode(stoi(arr[0]));
+        bfsque.push(root);
+        int i=1;
+        while(bfsque.size()){
+            auto node=bfsque.front();    bfsque.pop();
+            if(arr[i]!="#"){
+                node->left=new TreeNode(stoi(arr[i]));
+                bfsque.push(node->left);
+            }
+            i++;
+            if(arr[i]!="#"){
+                node->right=new TreeNode(stoi(arr[i]));
+                bfsque.push(node->right);
+            }
+            i++;
+        }
+        return root;
+    }
+};

@@ -1,0 +1,88 @@
+在数组中的两个数字，如果前面一个数字大于后面的数字，则这两个数字组成一个逆序对。输入一个数组，求出这个数组中的逆序对的总数。
+
+示例 1:
+输入: [7,5,6,4]
+输出: 5
+
+限制：
+0 <= 数组长度 <= 50000
+
+【方法一】分而治之（借助归并排序）
+归并时，数组a和b分别有序，可以通过指针移动来计算逆序对。
+class Solution {
+public:
+    int reversePairs(vector<int>& nums) {
+        if(nums.empty())    return 0;
+        return mergeSort(nums,0,nums.size()-1);
+    }
+    int mergeSort(vector<int> &arr,int l,int r){
+        if(l>=r)    return 0;
+        int mid=(l+r+1)/2;
+        int res=mergeSort(arr,l,mid-1)+mergeSort(arr,mid,r);
+        vector<int> tmp(r-l+1);
+        int i=l,j=mid,k=0;
+        while(i<mid&&j<=r){
+            if(arr[i]<=arr[j])
+                tmp[k++]=arr[i++];
+            else{
+                tmp[k++]=arr[j++];
+                res+=mid-i;//j每右移一位，说明有mid-i个逆序对
+            }   
+        }
+        while(i<mid)
+            tmp[k++]=arr[i++];
+        while(j<=r)
+            tmp[k++]=arr[j++];
+        copy(tmp.begin(),tmp.end(),arr.begin()+l);
+        return res;
+    }
+};
+
+【方法二】离散化树状数组
+详细：
+https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/solution/shu-zu-zhong-de-ni-xu-dui-by-leetcode-solution/
+class BIT{
+private:
+    int n;
+    vector<int> tree;
+public:
+    BIT(int _n):n(_n),tree(_n+1){}
+    int lowbit(int k){
+        return k&-k;
+    }
+    int read(int k){
+        int res=0;
+        while(k>0){
+            res+=tree[k];
+            k-=lowbit(k);
+        }
+        return res;
+    }
+    void add(int k ,int num){
+        while(k<=n){
+            tree[k]+=num;
+            k+=lowbit(k);
+        }
+    }
+};
+class Solution {
+public:
+    int reversePairs(vector<int>& nums) {
+        discretization(nums);
+        int n=nums.size();
+        int res=0;
+        BIT bit(n);
+        for(int i=n-1;i>=0;i--){
+            bit.add(nums[i],1);
+            res+=bit.read(nums[i]-1);
+        }
+        return res;
+    }
+    void discretization(vector<int> &nums){
+        vector<int> tmp = nums;
+        sort(tmp.begin(), tmp.end());
+        tmp.erase(unique(tmp.begin(), tmp.end()), tmp.end());   // 去掉重复元素
+        for(int& num: nums) 
+            num = lower_bound(tmp.begin(), tmp.end(), num) - tmp.begin() + 1;
+    }
+};

@@ -1,0 +1,58 @@
+输入一个字符串，打印出该字符串中字符的所有排列。
+
+你可以以任意顺序返回这个字符串数组，但里面不能有重复元素。
+
+示例:
+
+输入：s = "abc"
+输出：["abc","acb","bac","bca","cab","cba"]
+
+限制：
+
+1 <= s 的长度 <= 8
+【方法一】STL库函数
+class Solution {
+public:
+    vector<string> permutation(string s) {
+        vector<string>  res;
+        do{
+            res.push_back(s);
+            next_permutation(s.begin(),s.end());
+        }while(s!=res[0]);
+        return res;
+    }
+};
+
+【方法二】回溯+剪枝
+对于一个长度为 n 的字符串（假设字符互不重复），其排列共有 n×(n−1)×(n−2)…×2×1种方案。
+
+ 根据字符串排列的特点，考虑深度优先搜索所有排列方案。
+即通过字符交换，先固定第 1 位字符（ n 种情况）、再固定第 2 位字符（ n−1 种情况）、... 、最后固定第 n 位字符（ 1 种情况）。
+如果有字符重复交换，则直接跳过该字符，该剪枝可以完全去重。
+或者不剪枝，用set记录结果，丢弃重复的结果。
+class Solution {
+public:
+    int len;
+    vector<string> res;
+    vector<string> permutation(string s) {
+        len=s.size();
+        backTrace(s,0);
+        return res;
+    }
+    void backTrace(string &s,int index){
+        if(index==len){
+            res.push_back(s);
+            return;
+        }
+        unordered_set<char> hashset;//剪枝，记录已经交换过的字符
+        for(int i=index;i<len;i++){
+            if(hashset.count(s[i]))
+                continue;
+            hashset.insert(s[i]);
+            swap(s[index],s[i]);
+            backTrace(s,index+1);
+            swap(s[index],s[i]);
+        }
+    }
+};
+

@@ -1,0 +1,59 @@
+输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的循环双向链表。
+要求不能创建任何新的节点，只能调整树中节点指针的指向。
+
+
+特别地，我们希望可以就地完成转换操作。当转化完成以后，树中节点的左指针需要指向前驱，树中节点的右指针需要指向后继。
+还需要返回链表中的第一个节点的指针。
+
+【思路】中序遍历
+【方法一】递归，更简洁
+class Solution {
+public:
+    Node* pre,*head;;
+    Node* treeToDoublyList(Node* root) {
+        if(!root)   return  nullptr;
+        dfs(root);
+        head->left=pre;//最后一个pre即为tail
+        pre->right=head;
+        return head;
+    }
+    void dfs(Node* root){
+        if(!root)   return;
+        dfs(root->left);
+        if(pre) 
+            pre->right=root;
+        else    
+            head=root;//pre为空说明是第一个，即为head
+        root->left=pre;
+        pre=root;
+        dfs(root->right);
+    }
+};
+【方法二】迭代
+class Solution {
+public:
+    Node* treeToDoublyList(Node* root) {
+        if(!root)   return  nullptr;
+        Node* head;
+        Node* node=root;
+        Node* pre=nullptr;
+        stack<Node*> sta;
+        while(node||sta.size()){
+            if(node){
+                sta.push(node);
+                node=node->left;
+            }
+            else{
+                node=sta.top(); sta.pop();
+                if(pre) pre->right=node;
+                else    head=node;
+                node->left=pre;
+                pre=node;
+                node=node->right;
+            }
+        }
+        head->left=pre;
+        pre->right=head;
+        return head;
+    }
+};

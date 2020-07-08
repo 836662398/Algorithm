@@ -1,0 +1,49 @@
+统计所有小于非负整数 n 的质数的数量。
+
+示例:
+
+输入: 10
+输出: 4
+解释: 小于 10 的质数一共有 4 个, 它们是 2, 3, 5, 7 。
+
+【思路】埃式筛法——快速筛选n以内的素数
+要得到自然数n以内的全部素数，必须把不大于sqrt(n)（因子对称性）的所有素数的倍数剔除，剩下的就是素数。
+class Solution {
+public:
+    int countPrimes(int n) {
+        int res=0;
+        vector<bool> isPrime(n+1,1);
+        for(int i=2;i*i<n;i++){
+            if(isPrime[i]){
+                for(int j=i;i*j<n;j++){//j不需要从2开始，从2开始会有大量重复，比如i=5时，2*4 3*4 4*4 已经被前面的计算过了。
+                    isPrime[i*j]=0;
+                }
+            }
+        }
+        for(int i=2;i<n;i++)
+            if(isPrime[i])
+                res++;
+        return res;
+    }
+};
+【PS】vector<bool> 底层并不是bool的容器，而是用bit封装的特殊结构来节省空间，但增加了时间。所以最好用内置数组：
+class Solution {
+public:
+    int countPrimes(int n) {
+        if(n<3) return 0;
+        int res=0;
+        bool isPrime[n];
+        memset(isPrime, true, sizeof(isPrime));
+        for(int i=2;i*i<n;i++){
+            if(isPrime[i]){
+                for(int j=i;i*j<n;j++){
+                    isPrime[i*j]=0;
+                }
+            }
+        }
+        for(int i=2;i<n;i++)
+            if(isPrime[i])
+                res++;
+        return res;
+    }
+};

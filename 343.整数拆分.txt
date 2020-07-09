@@ -14,7 +14,7 @@
 
 说明: 你可以假设 n 不小于 2 且不大于 58。
 
-【思路】
+【方法一】
 F(n)=max{i∗F(n−i)}，i=1，2，...，n−1
 
 上述表达式是表明n - i需要继续分解的情况，但如果n - i比F(n - i)要大，显然就不用再继续分解了。故我们还需要比较i * (n - i)与i * F(n - i)的大小关系。所以完整的表达式应该为：
@@ -34,3 +34,22 @@ public:
     }
 };
 
+【方法二】贪心
+切分规则：
+    最优： 3 。把绳子尽可能切为多个长度为 3 的片段，留下的最后一段绳子的长度可能为 0,1,2 三种情况。
+    次优： 2 。若最后一段绳子长度为 2 ；则保留，不再拆为 1+1 。
+    最差： 1 。若最后一段绳子长度为 1 ；则应把一份 3+1 替换为 2+2，因为 2×2>3×1。
+证明：https://leetcode-cn.com/problems/jian-sheng-zi-ii-lcof/solution/mian-shi-ti-14-ii-jian-sheng-zi-iitan-xin-er-fen-f/
+几何平均数小于等于算术平均数，且在各元素相等时，几何平均数取最大，所以应该尽可能使拆分的数字相等。
+假设数字被拆分成a个x,n=ax，则成绩y=x^a=（x^(1/x)）^n，求导，得x=3时最大。
+class Solution {
+public:
+    int integerBreak(int n) {
+        if(n==2)    return 1;
+        if(n==3)    return 2;
+        if(n%3==0)  return pow(3,n/3);
+        if(n%3==1)  return pow(3,(n-4)/3)*2*2;
+        if(n%3==2)  return pow(3,n/3)*2;
+        return 0;
+    }
+};

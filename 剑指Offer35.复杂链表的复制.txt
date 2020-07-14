@@ -1,0 +1,59 @@
+请实现 copyRandomList 函数，复制一个复杂链表。在复杂链表中，每个节点除了有一个 next 指针指向下一个节点，还有一个 random 指针指向链表中的任意节点或者 null。
+
+【方法一】哈希表
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(!head)   return nullptr;
+        unordered_map<Node*,Node*> hashmap;
+        Node* tmp=head;
+        while(tmp){
+            hashmap[tmp]=new Node(tmp->val);
+            tmp=tmp->next;
+        }
+        tmp=head;
+        while(tmp){
+            hashmap[tmp]->next=hashmap[tmp->next];
+            hashmap[tmp]->random=hashmap[tmp->random];
+            tmp=tmp->next;
+        }
+        return hashmap[head];
+    }
+};
+【方法二】最优解法
+1.复制一个新的节点在原有节点之后，如 1 -> 2 -> 3 -> null 复制完就是 1 -> 1 -> 2 -> 2 -> 3 - > 3 -> null
+2.从头开始遍历链表，通过 cur.next.random = cur.random.next 可以将复制节点的随机指针串起来，当然需要判断 cur.random 是否存在
+3.将复制完的链表一分为二 
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(!head)   return NULL;
+        // 完成链表节点的复制
+        Node* tmp=head;
+        while(tmp){
+            Node* next=tmp->next;
+            Node* node=new Node(tmp->val);
+            node->next=next;
+            tmp->next=node;
+            tmp=next;
+        }
+        // 完成链表复制节点的随机指针复制
+        tmp=head;
+        while(tmp){
+            if(tmp->random)
+                tmp->next->random=tmp->random->next;
+            tmp=tmp->next->next;
+        }
+        Node* newhead=head->next;
+        // 将链表一分为二
+        tmp=head;
+        while(tmp){
+            Node* next=tmp->next->next;
+            if(next)
+                tmp->next->next=next->next;
+            tmp->next=next;
+            tmp=next;
+        }
+        return newhead;
+    }
+};

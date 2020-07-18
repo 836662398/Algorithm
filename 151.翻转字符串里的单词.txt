@@ -57,20 +57,22 @@ public:
 class Solution {
 public:
     string reverseWords(string s) {
+        int n=s.size();
         reverse(s.begin(),s.end());
-        int index=0,end,len=s.size();
-        for(int start=0;start<len;start++){
+        int index=0,end;//index为结果的索引位置
+        for(int start=0;start<n;start++){//start为每个单词的起始位置
             if(s[start]!=' '){
                 if(index!=0)
                     s[index++]=' ';
                 end=start;
-                while(end<len && s[end]!=' ')
+                while(end<n && s[end]!=' '){
                     s[index++]=s[end++];
-                reverse(s.begin()+index-(end-start),s.begin()+index);
+                }
+                reverse(s.begin()+index-(end-start),s.begin()+index);//index为尾后迭代器索引,end也为单词尾部后一位
                 start=end;
             }
         }
-        s.erase(s.begin()+index,s.end());
+        s.resize(index);
         return s;
     }
 };

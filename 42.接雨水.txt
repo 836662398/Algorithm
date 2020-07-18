@@ -1,0 +1,62 @@
+给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+示例:
+
+输入: [0,1,0,2,1,0,1,3,2,1,2,1]
+输出: 6
+
+【方法一】
+直接按问题描述进行。
+对于数组中的每个元素，我们找出下雨后水能达到的最高位置，等于两边最大高度的较小值减去当前高度的值。
+左右两边最大高度可以分别用数组记录。
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int n=height.size();
+        if(!n)  return 0;
+        vector<int> leftmax(n);
+        vector<int> rightmax(n);
+        int left=height[0],right=height[n-1];
+        for(int i=1;i<n-1;i++){
+            left=max(left,height[i]);
+            leftmax[i]=left;
+        }
+        for(int i=n-2;i>=0;i--){
+            right=max(right,height[i]);
+            rightmax[i]=right;
+        }
+        int res=0;
+        for(int i=1;i<n-1;i++){
+            res+=min(leftmax[i],rightmax[i])-height[i];
+        }
+        return res;
+    }
+};
+【方法二】双指针
+使用双指针来维护leftmax和rightmax，当rightmax>leftmax时，res需要增加的水位取决于两者间小的leftmax，
+left指针可以向右移动；反之亦然。
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int n=height.size();
+        if(!n)  return 0;
+        int leftmax=height[0],rightmax=height[n-1];
+        int left=0,right=n-1,res=0;
+        while(left<right){
+            if(leftmax<=rightmax){
+                left++;
+                if(height[left]>leftmax)
+                    leftmax=height[left];
+                else
+                    res+=leftmax-height[left];
+            }
+            else{
+                right--;
+                if(height[right]>rightmax)
+                    rightmax=height[right];
+                else
+                    res+=rightmax-height[right];
+            }
+        }
+        return res;
+    }
+};

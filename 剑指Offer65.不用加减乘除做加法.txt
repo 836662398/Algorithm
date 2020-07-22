@@ -1,0 +1,40 @@
+写一个函数，求两个整数之和，要求在函数体内不得使用 “+”、“-”、“*”、“/” 四则运算符号。
+
+示例:
+输入: a = 1, b = 1
+输出: 2
+
+提示：
+    a, b 均可能是负数或 0
+    结果不会溢出 32 位整数
+
+【思路】
+a+b=a^b+((a&b)<<1)
+右式为 无进位和+ 进位
+右式的 + 可以使用递归来完成，当 进位 为0时，递归停止，返回a。
+Q：进位为什么最终会变为0？
+A：因为 左移 运算 缺位补0，左移后低位一定为0，与0进行与运算结果仍然为0。每递归一次，低位0只增不减，最多只有32位，
+     32轮后必定全为0。
+
+class Solution {
+public:
+    int add(int a, int b) {
+        if(b==0)
+            return a;
+        int x=a^b;
+        int y=(unsigned)(a&b)<<1;//leetcode c++负数左移有bug会报错
+        return add(x,y);
+    }
+};
+迭代优化：
+class Solution {
+public:
+    int add(int a, int b) {
+        while(b){
+            int x=(unsigned)(a&b)<<1;;
+            a^=b;
+            b=x;
+        }
+        return a;
+    }
+};

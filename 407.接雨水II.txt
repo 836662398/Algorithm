@@ -1,0 +1,62 @@
+给你一个 m x n 的矩阵，其中的值均为非负整数，代表二维高度图每个单元的高度，请计算图中形状最多能接多少体积的雨水。
+
+示例：
+
+给出如下 3x6 的高度图:
+[
+  [1,4,3,1,3,2],
+  [3,2,1,3,2,4],
+  [2,3,3,2,3,1]
+]
+
+返回 4 。
+提示：
+
+    1 <= m, n <= 110
+    0 <= heightMap[i][j] <= 20000
+
+【思路】bfs+小顶堆
+根据木桶原理，将矩阵外围（围墙）放入小顶堆，同时用visited记录已经遍历过的元素，取堆里最矮的一块，弹出
+将其与四周未遍历过的元素依次比较，如果该元素比周围某块高，说明该块可以灌水，水量为两元素之差，并将灌完水的这块
+放入堆，当成新的围墙；反之不可灌水，直接将这块置入堆中。循环直至遍历结束。
+class Node{
+public:
+    int x,y,val;
+    Node(int _x,int _y,int _val):x(_x),y(_y),val(_val){}
+    bool operator>(const Node& a)const{
+        return val>a.val;
+    }
+};
+class Solution {
+public:
+    int trapRainWater(vector<vector<int>>& heightMap) {
+        vector<int> dir={1,0,-1,0,1};
+        int m=heightMap.size(),n=heightMap[0].size();
+        int res=0;
+        priority_queue<Node,vector<Node>,greater<Node>> pq;
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++)
+                if(i==0||i==m-1||j==0||j==n-1){
+                    pq.push(Node(j,i,heightMap[i][j]));
+                    visited[i][j]=1;
+                }
+        }
+        while(pq.size()){
+            Node tmp=pq.top();  pq.pop();
+            int x=tmp.x,y=tmp.y,hei=tmp.val;
+            for(int i=0;i<4;i++){
+                int nx=x+dir[i];
+                int ny=y+dir[i+1];
+                if(nx>=0&&nx<n&&ny>=0&&ny<m&&visited[ny][nx]==0){
+                    visited[ny][nx]=1;
+                    if(heightMap[ny][nx]<hei){
+                        res+=hei-heightMap[ny][nx];
+                    }
+                    pq.push(Node(nx,ny,max(heightMap[ny][nx],hei)));
+                }
+            }
+        }
+        return res;
+    }
+};

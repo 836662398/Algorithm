@@ -54,3 +54,56 @@ public:
         return true;
     }
 };
+【优化】
+用三个数组来加速判断，分别为列数组、正对角线数组、反对角线数组。
+class Solution {
+public:
+    vector<vector<string>> res;
+    vector<int> coloumns;
+    vector<int> diaOne;
+    vector<int> diaTwo;
+    vector<int> memo;
+    int n;
+    vector<vector<string>> solveNQueens(int n) {
+        this->n=n;
+        coloumns=vector<int>(n,0);
+        diaOne=vector<int>(2*n,0);
+        diaTwo=vector<int>(2*n,0);
+        dfs(0);
+        return res;
+    }
+    void dfs(int row){
+        if(row==n){
+            vector<string> ans(n,string(n,'.'));
+            for(int i=0;i<n;i++){
+                ans[i][memo[i]]='Q';
+            }
+            res.push_back(ans);
+            return;
+        }
+        for(int i=0;i<n;i++){
+            if(isValid(row,i)){
+                palaceQueen(row,i);
+                dfs(row+1);
+                removeQueen(row,i);
+            } 
+        }
+    }
+    void palaceQueen(int row,int col){
+        coloumns[col]=1;
+        diaOne[row+col]=1;
+        diaTwo[row-col+n]=1;
+        memo.push_back(col);
+    }
+    void removeQueen(int row,int col){
+        coloumns[col]=0;
+        diaOne[row+col]=0;
+        diaTwo[row-col+n]=0;
+        memo.pop_back();
+    }
+    bool isValid(int row,int col){
+        if(coloumns[col] || diaOne[col+row] || diaTwo[row-col+n])
+            return false;
+        return true;
+    }
+};

@@ -1,0 +1,57 @@
+你有 k 个升序排列的整数数组。找到一个最小区间，使得 k 个列表中的每个列表至少有一个数包含在其中。
+
+我们定义如果 b-a < d-c 或者在 b-a == d-c 时 a < c，则区间 [a,b] 比 [c,d] 小。
+
+示例 1:
+输入:[[4,10,15,24,26], [0,9,12,20], [5,18,22,30]]
+输出: [20,24]
+解释: 
+列表 1：[4, 10, 15, 24, 26]，24 在区间 [20,24] 中。
+列表 2：[0, 9, 12, 20]，20 在区间 [20,24] 中。
+列表 3：[5, 18, 22, 30]，22 在区间 [20,24] 中。
+
+注意:
+    给定的列表可能包含重复元素，所以在这里升序表示 >= 。
+    1 <= k <= 3500
+    -105 <= 元素的值 <= 105
+
+【思路】类似合并k个排序链表
+给定 k 个列表，需要找到最小区间，使得每个列表都至少有一个数在该区间中。
+该问题可以转化为，从 k 个列表中各取一个数，使得这 k 个数中的最大值与最小值的差最小。
+
+使用k个指针，每个列表一个指针，将指针指向的值、该值的数组索引、指针 放入node，
+维护node的小顶堆，同时记录堆中最大值，每次取出堆顶最小值，更新最小区间。
+
+
+class node {
+public:
+    int val,vecnum,index;
+    bool operator>(const node& a)const{
+        return val>a.val;
+    }
+};
+class Solution {
+public:
+    vector<int> smallestRange(vector<vector<int>>& nums) {
+        int n=nums.size(),maxnum=INT_MIN,reslen=INT_MAX;
+        vector<int> res;
+        priority_queue<node,vector<node>,greater<node>> minheap;
+        for(int i=0;i<n;i++){
+            minheap.push({nums[i][0],i,0});
+            maxnum=max(maxnum,nums[i][0]);
+        }
+        while(1){
+            node tmp=minheap.top();  minheap.pop();
+            int value=tmp.val,ind=tmp.index,vnum=tmp.vecnum;
+            if(maxnum-value<reslen){
+                res={value,maxnum};
+                reslen=maxnum-value;
+            }
+            if(ind==nums[vnum].size()-1)//bug点，需要-1
+                break;
+            minheap.push({nums[vnum][ind+1],vnum,ind+1});
+            maxnum=max(maxnum,nums[vnum][ind+1]);
+        }
+        return res;
+    }
+};

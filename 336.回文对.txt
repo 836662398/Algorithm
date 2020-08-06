@@ -1,0 +1,62 @@
+给定一组 互不相同 的单词， 找出所有不同 的索引对(i, j)，使得列表中的两个单词， words[i] + words[j] ，可拼接成回文串。
+
+示例 1：
+
+输入：["abcd","dcba","lls","s","sssll"]
+输出：[[0,1],[1,0],[3,2],[2,4]] 
+解释：可拼接成的回文串为 ["dcbaabcd","abcddcba","slls","llssssll"]
+
+示例 2：
+
+输入：["bat","tab","cat"]
+输出：[[0,1],[1,0]] 
+解释：可拼接成的回文串为 ["battab","tabbat"]
+
+四种情况：
+    1.数组里有空字符串，并且数组里还有自己就是回文的字符串，每出现一个可与空字符串组成两对。
+    2.如果自己的翻转后的字符串也在数组里，可以组成一对，注意翻转后不能是自己。
+    3.如果某个字符串能找到一个分割点，分割点前的部分是回文，后半部分翻转后也在数组里，可组成一对。
+    4.把3反过来，如果后部分是回文，前半部分翻转后在数组里，可组成一对。
+
+可以把各字符串翻转后的字符串记录在哈希表中，以便之后查询。
+class Solution {
+public:
+    unordered_map<string,int> memo;
+    bool isPalindromePairs(const string& word,int l,int r){
+        int left=l,right=r;
+        while(left<right)
+            if(word[left++]!=word[right--])
+                return false;
+        return true;
+    }
+    int findWord(const string &word,int l,int r){//找出是否有可以配对情况
+        auto it=memo.find(word.substr(l,r-l+1));
+        return it==memo.end()?-1:it->second;
+    }
+    vector<vector<int>> palindromePairs(vector<string>& words) {
+        int n=words.size();
+        for(int i=0;i<n;i++){
+            string str=words[i];
+            reverse(str.begin(),str.end());
+            memo[str]=i;
+        }
+        vector<vector<int>> res;
+        for(int i=0;i<n;i++){
+            string str=words[i];
+            int n2=str.size();
+            for(int j=0;j<=n2;j++){
+                if(j&&isPalindromePairs(str,0,j-1)){//前缀是回文,用j去除无回文重复情况
+                    int tmp=findWord(str,j,n2-1);
+                    if(tmp!=-1&&tmp!=i)
+                        res.push_back({tmp,i});
+                }
+                if(isPalindromePairs(str,j,n2-1)){//后缀是回文
+                    int tmp=findWord(str,0,j-1);
+                    if(tmp!=-1&&tmp!=i)
+                        res.push_back({i,tmp});
+                }
+            }
+        }
+        return res;
+    }
+};

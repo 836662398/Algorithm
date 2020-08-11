@@ -1,0 +1,89 @@
+给定一个整数数组 nums，返回区间和在 [lower, upper] 之间的个数，包含 lower 和 upper。
+区间和 S(i, j) 表示在 nums 中，位置从 i 到 j 的元素之和，包含 i 和 j (i ≤ j)。
+
+说明:
+最直观的算法复杂度是 O(n2) ，请在此基础上优化你的算法。
+
+示例:
+
+输入: nums = [-2,5,-1], lower = -2, upper = 2,
+输出: 3 
+解释: 3个区间分别是: [0,0], [2,2], [0,2]，它们表示的和分别为: -2, -1, 2。
+
+【思路】同逆序对
+
+1.求前缀和得到数组sums；
+2.计算前缀各数组中，当 i<j 时，sums[j]−sums[i]的差在 [lower,upper]之间的(i,j)对数。
+  即sums[j]-sums[i]<=upper的对数，减去sums[j]-sums[i]<lower的对数。
+
+求逆序对个数是这个题目的一个特例，也就是让你计算 sums[j]−sums[i]<0的个数。
+
+class Solution {
+   public:
+    using ll = long long;
+    int lower, upper;
+    int countRangeSum(vector<int>& nums, int lower, int upper) {
+        int n = nums.size();
+        vector<ll> preSum(n + 1);
+        for (int i = 0; i < n; i++)
+            preSum[i + 1] = preSum[i] + nums[i];
+        this->lower = lower;
+        this->upper = upper;
+        return mergerSort(preSum, 0, n);
+    }
+    int mergerSort(vector<ll>& arr, int L, int R) {
+        if (L == R) return 0;
+        int mid = (L + R) / 2;
+        int cnt = mergerSort(arr, L, mid) + mergerSort(arr, mid + 1, R);
+        int left1 = L, left2 = mid + 1;
+        while (left1 < mid + 1 && left2 <= R) {
+            if (arr[left2] <= arr[left1] + upper) {
+                cnt += mid + 1 - left1;
+                left2++;
+            } else  left1++;
+        }
+        left1 = L, left2 = mid + 1;
+        while (left1 < mid + 1 && left2 <= R) {
+            if (arr[left2] < arr[left1] + lower) {
+                cnt -= mid + 1 - left1;
+                left2++;
+            } else  left1++;
+        }
+        inplace_merge(arr.begin() + L, arr.begin() + mid + 1, arr.begin() + R + 1);
+        return cnt;
+    }
+};
+【优化】
+class Solution {
+   public:
+    using ll = long long;
+    int lower, upper;
+    int countRangeSum(vector<int>& nums, int lower, int upper) {
+        int n = nums.size();
+        vector<ll> preSum(n + 1);
+        for (int i = 0; i < n; i++)
+            preSum[i + 1] = preSum[i] + nums[i];
+        this->lower = lower;
+        this->upper = upper;
+        return mergerSort(preSum, 0, n);
+    }
+    int mergerSort(vector<ll>& arr, int L, int R) {
+        if (L == R) return 0;
+        int mid = (L + R) / 2;
+        int cnt = mergerSort(arr, L, mid) + mergerSort(arr, mid + 1, R);
+        int right1 = mid + 1, right2 = mid + 1;
+        for (int left = L; left <= mid; left++) {
+            // 统计右侧-arr[left] <= upper 的个数
+            while (right1 <= R && arr[right1] <= upper + arr[left])
+                right1++;
+            // 统计右侧-arr[left] < lower 的个数
+            while (right2 <= R && arr[right2] < lower + arr[left])
+                right2++;
+            // 因此右侧-nums[left]的差在 [lower,upper] 的个数为：
+            //count += (right2 - mid) - (right1 - mid); 可以简写为下面这样
+            cnt += right1 - right2;
+        }
+        inplace_merge(arr.begin() + L, arr.begin() + mid + 1, arr.begin() + R + 1);
+        return cnt;
+    }
+};

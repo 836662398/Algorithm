@@ -1,0 +1,59 @@
+我们有一系列公交路线。每一条路线 routes[i] 上都有一辆公交车在上面循环行驶。例如，有一条路线 routes[0] = [1, 5, 7]，表示第一辆 (下标为0) 公交车会一直按照 1->5->7->1->5->7->1->... 的车站路线行驶。
+
+假设我们从 S 车站开始（初始时不在公交车上），要去往 T 站。 期间仅可乘坐公交车，求出最少乘坐的公交车数量。返回 -1 表示不可能到达终点车站。
+
+示例：
+输入：
+routes = [[1, 2, 7], [3, 6, 7]]
+S = 1
+T = 6
+输出：2
+解释：
+最优策略是先乘坐第一辆公交车到达车站 7, 然后换乘第二辆公交车到车站 6。
+
+提示：
+    1 <= routes.length <= 500.
+    1 <= routes[i].length <= 10^5.
+    0 <= routes[i][j] < 10 ^ 6.
+【思路】BFS
+数据比较特殊，无法创建邻接表使用dijkstra等算法，只能特殊处理，使用广搜。
+首先处理数据，使用unordered_map<int, vector<int>> memo，统计每个站点所涉及的线路。
+使用队列对站点进行BFS，由站点site及memo可以得到该站点可以经过的线路，
+剪枝：用visited记录访问过的路线。如果该线路没有访问过，则将该线路可以到达的所有站点入队。
+BFS直至找到目的地，或者返回-1。
+
+使用visited记录访问过得路线，而不是站点，因为判断站点需要比判断路线多一个循环，大大增加了时间。
+
+class Solution {
+public:
+    int numBusesToDestination(vector<vector<int>>& routes, int S, int T) {
+        if(S==T)    return 0;
+        unordered_map<int,vector<int>> memo;//memo[i]表示第i个站点被哪些公交线路经过
+        int n=routes.size();
+        bool visited[505];//已访问过的路线
+        memset(visited,0,sizeof(visited));
+        for(int i=0;i<n;i++){
+            for(int num:routes[i])
+                memo[num].push_back(i);
+        }
+        queue<int> iqueue;//将下一个可以到达的站点全部入队
+        iqueue.push(S);
+        int cnt=0;
+        while(iqueue.size()){
+            cnt++;
+            for(int i=iqueue.size();i>0;i--){
+                int site=iqueue.front();  iqueue.pop();//站点
+                for(int route:memo[site]){
+                    if(visited[route])  continue;//剪枝：此路线已访问过，不再访问
+                    for(int s:routes[route]){
+                        if(s==T)    return cnt;
+                        iqueue.push(s);
+                    }
+                    visited[route]=true;
+                }
+            }
+            
+        }
+        return -1;
+    }
+};

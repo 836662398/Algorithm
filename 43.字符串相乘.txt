@@ -1,0 +1,92 @@
+给定两个以字符串形式表示的非负整数 num1 和 num2，返回 num1 和 num2 的乘积，它们的乘积也表示为字符串形式。
+
+示例 1:
+
+输入: num1 = "2", num2 = "3"
+输出: "6"
+
+示例 2:
+
+输入: num1 = "123", num2 = "456"
+输出: "56088"
+
+说明：
+
+    num1 和 num2 的长度小于110。
+    num1 和 num2 只包含数字 0-9。
+    num1 和 num2 均不以零开头，除非是数字 0 本身。
+    不能使用任何标准库的大数类型（比如 BigInteger）或直接将输入转换为整数来处理。
+
+【方法一】竖式乘法
+使用字符串加法 + 字符串乘法
+class Solution {
+public:
+    string multiply(string num1, string num2) {
+        if(num1=="0"||num2=="0")    return "0";
+        int n2=num2.size();
+        string res="";
+        for(int i=0;i<n2;i++){
+            if(res!="") res.push_back('0');
+            res=add(res,mul(num1,num2[i]));
+        }
+        return res;
+    }
+    string mul(const string& num1,const char& x){
+        string res;
+        int num2=x-'0';
+        int carrybit=0,n=num1.size();
+        for(int i=n-1;i>=0;i--){
+            int num=num1[i]-'0';
+            num*=num2;
+            num+=carrybit;
+            res.push_back(num%10+'0');
+            carrybit=num/10;
+        }
+        if(carrybit)    res.push_back(carrybit+'0');
+        reverse(res.begin(),res.end());
+        return res;
+    }
+    string add(const string& num1,const string& num2){
+        int sum=0,i=num1.size()-1,j=num2.size()-1;
+        string res;
+        while(i>=0||j>=0||sum){
+            if(i>=0)    sum+=num1[i--]-'0';
+            if(j>=0)    sum+=num2[j--]-'0';
+            res+=sum%10 +'0';
+            sum/=10;
+        }
+        reverse(res.begin(),res.end());
+        return res;
+    }
+};
+
+【方法二】
+在方法一竖式乘法基础上，使用数组arr代替字符串存储结果，则可以减少对字符串的操作。
+arr的下标和num1,num2的下标有对应关系，存储在对应下标即可。
+存储时先不进位，全部存储完再整体进行进位处理，
+class Solution {
+public:
+    string multiply(string num1, string num2) {
+        if(num1=="0"||num2=="0")    return "0";
+        int n1=num1.size(),n2=num2.size();
+        vector<int> arr(n1+n2);//结果位数只有两种可能n1+n2-1或者n1+n2
+        for(int i=n1-1;i>=0;i--){
+            int x=num1[i]-'0';
+            for(int j=n2-1;j>=0;j--){
+                int y=num2[j]-'0';
+                arr[i+j+1]+=x*y;
+            }
+        }
+        int carrybit=0;
+        for(int i=n1+n2-1;i>=0;i--){
+            arr[i]+=carrybit;
+            carrybit=arr[i]/10;
+            arr[i]%=10;
+        }
+        string res;
+        int i= arr[0]==0? 1:0;//结果位数位n1+n2-1时第一位为0
+        for(;i<n1+n2;i++)
+            res.push_back(arr[i]+'0');
+        return res;
+    }
+};

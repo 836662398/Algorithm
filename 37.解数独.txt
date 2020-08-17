@@ -1,0 +1,61 @@
+编写一个程序，通过已填充的空格来解决数独问题。
+
+一个数独的解法需遵循如下规则：
+
+    数字 1-9 在每一行只能出现一次。
+    数字 1-9 在每一列只能出现一次。
+    数字 1-9 在每一个以粗实线分隔的 3x3 宫内只能出现一次。
+
+空白格用 '.' 表示。
+
+一个数独。
+
+答案被标成红色。
+
+Note:
+
+    给定的数独序列只包含数字 1-9 和字符 '.' 。
+    你可以假设给定的数独只有唯一解。
+    给定数独永远是 9x9 形式的。
+
+【思路】回溯
+方块索引= (行 / 3) * 3 + 列 / 3
+使用一维index记录位置，将其转换为坐标。
+每到达一个 . 位置，依次使用数字1 - 9 。
+使回溯函数返回bool类型，用来判断上一个回溯是否需要进行下一次循环。
+ 
+class Solution {
+   public:
+    bool row[9][9]{}, col[9][9]{}, cell[9][9]{};
+    void solveSudoku(vector<vector<char>>& board) {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] == '.') continue;
+                row[i][board[i][j] - '1'] = 1;
+                col[j][board[i][j] - '1'] = 1;
+                cell[i / 3 * 3 + j / 3][board[i][j] - '1'] = 1;
+            }
+        }
+        backtrace(board, 0);
+    }
+    
+    bool backtrace(vector<vector<char>>& board, int index) {
+        if (index == 81)
+            return true;
+        int r = index / 9;
+        int c = index % 9;
+        int ce = r / 3 * 3 + c / 3;
+        if (board[r][c] != '.')
+            return backtrace(board, index + 1);
+        for (int i = 0; i < 9; i++) {
+            if (!row[r][i] && !col[c][i] && !cell[ce][i]) {
+                row[r][i] = col[c][i] = cell[ce][i] = 1;
+                board[r][c] = i + '1';
+                if (backtrace(board, index + 1))    return true;
+                row[r][i] = col[c][i] = cell[ce][i] = 0;
+                board[r][c] = '.';
+            }
+        }
+        return false;
+    }
+};

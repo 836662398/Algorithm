@@ -1,0 +1,53 @@
+给你一个链表，每 k 个节点一组进行翻转，请你返回翻转后的链表。
+
+k 是一个正整数，它的值小于或等于链表的长度。
+
+如果节点总数不是 k 的整数倍，那么请将最后剩余的节点保持原有顺序。
+
+示例：
+
+给你这个链表：1->2->3->4->5
+
+当 k = 2 时，应当返回: 2->1->4->3->5
+
+当 k = 3 时，应当返回: 3->2->1->4->5
+
+【思路】
+先遍历链表得出长度，算出需要循环的次数n；
+每次循环反转一段，记录该段前一个节点，反转函数返回该段新头节点以及下一段头节点，连接起来，进行下一次循环。
+class Solution {
+   public:
+    using PLL=pair<ListNode*,ListNode*>;
+    ListNode* reverseKGroup(ListNode* head, int k) {
+        int len=0;
+        auto tmp=head;
+        ListNode p(0);
+        ListNode* dummyhead=&p;
+        dummyhead->next=head;
+        while(tmp){
+            tmp=tmp->next;
+            len++;
+        }
+        ListNode* pre=dummyhead;//被反转的链表段的前一节点
+        int n=len/k;
+        while(n--){
+            auto fir=pre->next;//该段原头结点
+            auto res=reverse(fir,k);
+            pre->next=res.first;//将前一节点与新节点连接
+            fir->next=res.second;//原头结点变为尾结点，连接下一段头结点
+            pre=fir;
+        }
+        return dummyhead->next;
+    }
+    PLL reverse(ListNode* head,int k){
+        ListNode* cur=head;
+        ListNode* pre=NULL;
+        while(k--){
+            auto tmp=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=tmp;
+        }
+        return {pre,cur};//返回该段新的头节点，以及下一段的头结点
+    }
+};

@@ -1,0 +1,80 @@
+N 对情侣坐在连续排列的 2N 个座位上，想要牵到对方的手。 计算最少交换座位的次数，以便每对情侣可以并肩坐在一起。 一次交换可选择任意两人，让他们站起来交换座位。
+
+人和座位用 0 到 2N-1 的整数表示，情侣们按顺序编号，第一对是 (0, 1)，第二对是 (2, 3)，以此类推，最后一对是 (2N-2, 2N-1)。
+
+这些情侣的初始座位  row[i] 是由最初始坐在第 i 个座位上的人决定的。
+
+示例 1:
+输入: row = [0, 2, 1, 3]
+输出: 1
+解释: 我们只需要交换row[1]和row[2]的位置即可。
+
+示例 2:
+输入: row = [3, 2, 0, 1]
+输出: 0
+解释: 无需交换座位，所有的情侣都已经可以手牵手了。
+
+说明:
+    len(row) 是偶数且数值在 [4, 60]范围内。
+    可以保证row 是序列 0...len(row)-1 的一个全排列。
+
+【思路】
+因为必须要让所有情侣成对，所以情侣所在位置必须为 2x,2x+1，不可能为2x-1,2x（此时首尾不成对）。
+假设把每个位置对 (2x,2x+1) 当成一个沙发，最终目的就是让每对情侣都坐在同一个沙发上。
+假设一共2n个人，n个沙发。
+
+【方法一】并查集
+
+我们将同一个沙发上的两个人连通，并且将所有情侣连通，我们的目的就是得到n个连通分量（沙发之间不连通）。
+没有达到要求时，每次交换，肯定可以至少配对一对情侣，同时增加一个联通分量；
+并且可以观察到不论怎么交换，一次交换都不可能增加多于一个连通分量，所以每次增加一个连通分量的交换就是最优解。
+
+交换次数就等于n-最开始的联通分量数。
+class Solution {
+public:
+    int parent[65];
+    int findRoot(int x){
+        return parent[x]==x?x:parent[x]=findRoot(parent[x]);
+    }
+    void Union(int x,int y){
+        parent[findRoot(x)]=findRoot(y);
+    }
+    int minSwapsCouples(vector<int>& row) {
+        int n=row.size();
+        for(int i=0;i<n;i+=2){
+            parent[i]=i;
+            parent[i+1]=i;
+        }
+        for(int i=0;i<n;i+=2)
+            Union(row[i],row[i+1]);
+        int cnt=0;
+        for(int i=0;i<n;i++)
+            if(parent[i]==i)    
+                cnt++;
+        return n/2-cnt;
+    }
+};
+【方法二】贪心
+对于每张沙发，找到沙发上第一个人的情侣，如果不在同一个沙发上，就把沙发上的第二人换成第一个人的情侣。
+
+如果一个人的编号为 x，那么他的情侣的编号为 x ^ 1， ^ 在这里是异或操作。
+对于每张沙发上的第一个人 x = row[i]，找到他们的同伴所在的位置 row[j]，将 row[j] 和 row[i + 1] 互相交换。
+
+class Solution {
+public:
+    int minSwapsCouples(vector<int>& row) {
+        int n=row.size(),cnt=0;
+        vector<int> records(n);
+        for(int i=0;i<n;i++)
+            records[row[i]]=i;
+        for(int i=0;i<n;i+=2){
+            if((row[i]^1)!=row[i+1]){//异或运算优先级比!=还低，要括号
+                int newPos=records[row[i]^1];
+                records[row[i+1]]=newPos;
+                swap(row[i+1],row[newPos]);
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+};

@@ -65,7 +65,7 @@ public:
         dp[0][0]=0;
         for(int i=1;i<=m;i++){
             for(int last=0;last<=lim;last++){
-	忽略初始dp[0][m],m非0情况
+	//忽略初始dp[0][m],m非0情况
                 if(dp[i-1][last]==0x3f3f3f3f)
                     continue;
 	//列举该行选取每一个元素的情况，有可能使状态不变：nxt=last

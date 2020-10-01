@@ -1,0 +1,196 @@
+我们给出了 N 种不同类型的贴纸。每个贴纸上都有一个小写的英文单词。
+
+你希望从自己的贴纸集合中裁剪单个字母并重新排列它们，从而拼写出给定的目标字符串 target。
+
+如果你愿意的话，你可以不止一次地使用每一张贴纸，而且每一张贴纸的数量都是无限的。
+
+拼出目标 target 所需的最小贴纸数量是多少？如果任务不可能，则返回 -1。
+
+ 
+
+示例 1：
+
+输入：
+
+["with", "example", "science"], "thehat"
+
+输出：
+3
+解释：
+我们可以使用 2 个 "with" 贴纸，和 1 个 "example" 贴纸。
+把贴纸上的字母剪下来并重新排列后，就可以形成目标 “thehat“ 了。
+此外，这是形成目标字符串所需的最小贴纸数量。
+
+示例 2：
+
+输入：
+
+["notice", "possible"], "basicbasic"
+
+输出：
+
+-1
+
+解释：
+我们不能通过剪切给定贴纸的字母来形成目标“basicbasic”。
+
+提示：
+
+    stickers 长度范围是 [1, 50]。
+    stickers 由小写英文单词组成（不带撇号）。
+    target 的长度在 [1, 15] 范围内，由小写字母组成。
+    在所有的测试案例中，所有的单词都是从 1000 个最常见的美国英语单词中随机选取的，目标是两个随机单词的串联。
+    时间限制可能比平时更具挑战性。预计 50 个贴纸的测试案例平均可在35ms内解决。
+
+
+
+【方法一】状压DP
+我们可以用一个二进制数表示target的每一位是否已经获取到。
+
+后得到的状态对应的二进制数一定大于它的父状态。所以我们可以很自然地从000...000这一状态开始，一直遍历到111...111（目标状态）。
+
+对于每一个状态，我们遍历所有的stickers，看它能够更新出怎样的状态。
+
+为了减少计算量，预处理得到了每一个sticker包含的每一种小写字母的个数。
+
+#define INF 0x3f3f3f3f
+
+class Solution {
+public:
+    int minStickers(vector<string>& stickers, string target) {
+        vector<int> dp(1 << 15, INF);
+        int n = stickers.size(), m = target.size();
+        vector<vector<int>> cnt(n, vector<int>(26));
+        for (int i = 0; i < n; ++i)
+            for (char c : stickers[i])
+                cnt[i][c - 'a']++;
+        
+        dp[0] = 0;
+        for (int i = 0; i < (1 << m); ++i) {
+            if (dp[i] == INF)
+                continue;
+            for (int k = 0; k < n; ++k) {
+                int nxt = i;
+                vector<int> left(cnt[k]);
+                for (int j = 0; j < m; ++j) {
+                    if (nxt & (1 << j))
+                        continue;
+                    if (left[target[j] - 'a'] > 0) {
+                        nxt += (1 << j);
+                        left[target[j] - 'a']--;
+                    }
+                }
+                dp[nxt] = min(dp[nxt], dp[i] + 1);
+            }
+        }
+        return dp[(1 << m) - 1] == INF ? -1 : dp[(1 << m) - 1];
+    }
+};
+
+【优化】
+上面的代码通过了测试，但时间和空间消耗均无法让人满意。让我们思考一下问题出在哪里。
+
+考虑有hello和world，目标状态是helloworld。我们从0000000000开始时，既考虑了使用hello，也考虑了使用world。
+这样就更新出了1111100000和0000011111两个状态。我们会发现，它们其实是殊途同归的。第一次选hello，第二次就要选world；
+第一次选world，第二次就要选hello。由于我们只需要计算使用贴纸的数量，先后顺序其实并不重要，这两个状态其实是重复的。
+
+如何消除这一重复？我们可以增加一重限制。
+每次从当前状态开始更新时，我们只选择包含了当前状态从左边开始第一个没有包含的字母的那些贴纸。
+比如说在上面的例子中，在0000000000状态下，我们将只会选择hello，不会选择world（没有包含h）。这样就去除了顺序导致的重复状态。
+
+为了实现这一优化，我们预处理得到了can数组，记录包含每一个字母的贴纸序号。
+
+class Solution {
+public:
+    int memo[55][30]{};
+    const int INF=0x3f3f3f3f;
+    unordered_map<string,int> ump;
+    int minStickers(vector<string>& stickers, string target) {
+        vector<vector<int>> can(26);
+        int n=target.size(), sn=stickers.size();
+        for(int i=0;i<sn;i++){
+            for(char c:stickers[i]){
+                int idx=c-'a';
+                memo[i][idx]++;
+                if(can[idx].empty() || can[idx].back()!=i)
+                    can[idx].push_back(i);
+            }
+        }
+        int dp[1<<15];
+        memset(dp,0x3f,sizeof(dp));
+        dp[0]=0;
+        for(int i=0;i<(1<<n)-1;i++){
+            if(dp[i]==INF)  continue;
+            int right=0;
+            for(right=0;right<n;right++){
+                if(!(i & (1<<right)))
+                    break;
+            }
+            right=target[right]-'a';
+            for(int idx : can[right]){
+                int memotmp[30],nxt=i;
+                memcpy(memotmp,memo[idx],120);
+                for(int k=0;k<n;k++){
+                    if((1<<k) & i)  continue;
+                    if(memotmp[target[k]-'a']>0){
+                        memotmp[target[k]-'a']--;
+                        nxt |=(1<<k);
+                    }
+                }
+                dp[nxt]=min(dp[nxt],dp[i]+1);
+            }
+        }
+        return dp[(1<<n)-1]== INF? -1 :dp[(1<<n)-1];
+    }
+};
+
+【方法二】记忆化搜索
+利用上面优化思想进行剪枝
+class Solution {
+public:
+    int sn;
+    int memo[55][30]{};
+    const int INF=0x3f3f3f3f;
+    unordered_map<string,int> ump;
+    int minStickers(vector<string>& stickers, string target) {
+        sn=stickers.size();
+        for(int i=0;i<sn;i++){
+            for(char c:stickers[i]){
+                memo[i][c-'a']++;
+            }
+        }
+        ump[""]=0;
+        int res=minCost(target);
+        return res>=INF? -1: res;
+    }
+    int minCost(string& target){
+        if(ump.count(target))    return ump[target];
+        int res=INF;
+        int n=target.size();
+        for(int i=0;i<sn;i++){
+            int memotmp[30];
+            memcpy(memotmp,memo[i],120);
+            if(memotmp[ target[0] -'a' ] ==0)//提前剪枝，去除重复情况
+                continue;
+            string ntarget;
+            bool isValid=false;
+            for(char c: target){
+                int idx=c-'a';
+                if(memotmp[idx]>0){
+                    isValid=true;
+                    memotmp[idx]--;
+                }else{
+                    ntarget+=c;
+                }
+            }
+            if(isValid)
+                res=min(res,minCost(ntarget)+1);
+        }
+        ump[target]=res;
+        return res;
+    }
+};
+
+
+
+

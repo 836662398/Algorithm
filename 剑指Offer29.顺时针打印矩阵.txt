@@ -16,7 +16,7 @@
     0 <= matrix.length <= 100
     0 <= matrix[i].length <= 100
 
-【思路】一层一层从外往里输出
+【方法一】一层一层从外往里输出
 class Solution {
 public:
     vector<int> spiralOrder(vector<vector<int>>& matrix) {
@@ -33,6 +33,37 @@ public:
             if(--rh < rl) break;
             for(int i=rh; i>=rl; i--) res.push_back(matrix[i][cl]);//从下往上
             if(++cl > ch) break;
+        }
+        return res;
+    }
+};
+
+【方法二】按层模拟
+每层求出左上和右下坐标，超出坐标范围说明需要转向；
+遇到起始坐标时，进入下一层。
+class Solution {
+   public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        if (matrix.empty())
+            return {};
+        int m = matrix.size(), n = matrix[0].size(), cnt = m * n;
+        int maxc = min((m + 1) / 2, (n + 1) / 2);	//最大的层数
+        int dirs[5] = {0, 1, 0, -1, 0};
+        vector<int> res;
+        for (int i = 0; i < maxc; i++) {
+            int row = i, col = i;
+            int maxRow = m - i - 1, maxCol = n - i - 1;
+            int idx = 0;
+            do {
+                res.push_back(matrix[row][col]);
+                cnt--;
+                if (row + dirs[idx] < i || col + dirs[idx + 1] < i ||
+                    row + dirs[idx] > maxRow || col + dirs[idx + 1] > maxCol) {
+                    idx = (idx + 1) % 4;
+                }
+                row += dirs[idx];
+                col += dirs[idx + 1];
+            } while (!(row == i && col == i) && cnt);
         }
         return res;
     }

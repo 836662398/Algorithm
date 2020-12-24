@@ -90,7 +90,7 @@ public:
         typedef pair<int, int> PII; // first:距离; second: 几号点
         vector<bool> st(N+1, false); // 是否已得到最短距离
         vector<int> dist(N+1, INT_MAX); // 距离起始点的最短距离
-        unordered_map<int, vector<PII>> graph; // 邻接表；u->v,权重w
+        vector<vector<PII>> graph; // 邻接表；u->v,权重w
         priority_queue<PII, vector<PII>, greater<PII>> heap; // 小顶堆；维护到起始点的最短距离和点
 
         for (auto &t: times){ // 初始化邻接表

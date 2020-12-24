@@ -9,44 +9,44 @@
 返回直到单元格中没有新鲜橘子为止所必须经过的最小分钟数。如果不可能，返回 -1。
 
 【思路】BFS
-    class Solution {
-    public:
-        int orangesRotting(vector<vector<int>>& grid) {
-            int x[4]={1,0,-1,0};
-            int y[4]={0,1,0,-1};
-            int m=grid.size(),n=grid[0].size();
-            queue<pair<int,int>> bfsque;
-            int corrupt=0,fresh=0,res=0;
-            for(int i=0;i<m;i++){
-                for(int j=0;j<n;j++){
-                    if(grid[i][j]==1)    fresh++;
-                    else if(grid[i][j]==2){
-                        corrupt++;
-                            bfsque.push({i,j});
-                    }   
-                }
+class Solution {
+public:
+    int orangesRotting(vector<vector<int>>& grid) {
+        int x[4]={1,0,-1,0};
+        int y[4]={0,1,0,-1};
+        int m=grid.size(),n=grid[0].size();
+        queue<pair<int,int>> bfsque;
+        int corrupt=0,fresh=0,res=0;
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(grid[i][j]==1)    fresh++;
+                else if(grid[i][j]==2){
+                    corrupt++;
+                        bfsque.push({i,j});
+                }   
             }
-            if(fresh==0) return 0;
-            if(corrupt==0)   return -1;
-            while(!bfsque.empty()&& fresh!=0){
-                res++;
-                for(int k=bfsque.size();k>0;k--){
-                    pair<int,int> tmp=bfsque.front();
-                    bfsque.pop();
-                    int i=tmp.first,j=tmp.second;
-                    for(int t=0;t<4;t++){
-                        int dx=i+x[t];
-                        int dy=j+y[t];
-                        if(dx>=0 &&dx<m && dy>=0 &&dy<n&&grid[dx][dy]==1 ){
-                            bfsque.push({dx,dy});
-                            grid[dx][dy]=2;
-                            fresh--;
-                        }
+        }
+        if(fresh==0) return 0;
+        if(corrupt==0)   return -1;
+        while(!bfsque.empty()&& fresh!=0){
+            res++;
+            for(int k=bfsque.size();k>0;k--){
+                pair<int,int> tmp=bfsque.front();
+                bfsque.pop();
+                int i=tmp.first,j=tmp.second;
+                for(int t=0;t<4;t++){
+                    int dx=i+x[t];
+                    int dy=j+y[t];
+                    if(dx>=0 &&dx<m && dy>=0 &&dy<n&&grid[dx][dy]==1 ){
+                        bfsque.push({dx,dy});
+                        grid[dx][dy]=2;
+                        fresh--;
                     }
                 }
             }
-            if(fresh!=0)
-                return -1;
-            return res;
         }
-    };
+        if(fresh!=0)
+            return -1;
+        return res;
+    }
+};

@@ -24,60 +24,62 @@ cache.get(3);       // 返回 3
 cache.get(4);       // 返回 4
 
 【思路】双哈希表+双向链表
-用节点存储键值、值、频率。
+用节点Node存储键值、值、频率。
 相同频率的节点在同一个链表上。
-双哈希表实现O(1)：keyTable表记录每个键值对应的在链表中的节点，listOfEachFre表记录每个频率对应的链表。
+双哈希表实现O(1)：keyMemo表记录每个键值对应的在链表中的节点，freMemo表记录每个频率对应的链表。
+[Tip]put()可以复用get()。
 
-struct Node{
-    int key,val,fre;
-    Node(int _key,int _val,int _fre):key(_key),val(_val),fre(_fre){}
+struct Node {
+    int key;
+    int val;
+    int fre;
 };
+
 class LFUCache {
-public:
-    int capacity,minFre;//minFre用来记录尾部链表（包含最久未使用的键）
-    unordered_map<int,list<Node>::iterator> keyTable;//每个键值对应节点
-    unordered_map<int,list<Node>> listOfEachFre;//每个频率对应的链表
+    using NodeList = list<Node>;
+    using NodeIt = list<Node>::iterator;
+    unordered_map<int, NodeList> freMemo;
+    unordered_map<int, NodeIt> keyMemo;
+    int cap;
+    int minFre = 0;
 
-    LFUCache(int capacity) {
-        this->capacity=capacity;
-    }
-    
+   public:
+    LFUCache(int capacity) { cap = capacity; }
+
     int get(int key) {
-        if(!capacity || !keyTable.count(key))
+        auto keyIt = keyMemo.find(key);
+        if (!cap || keyIt == keyMemo.end())
             return -1;
-        int fre=keyTable[key]->fre,val=keyTable[key]->val;
-        moveNode(key,val,fre);
-        return val;
-    }
-    
-    void put(int key, int value) {
-        if(!capacity)   return;
-        if(keyTable.count(key)==0){
-            if(keyTable.size()==capacity){
-                keyTable.erase(listOfEachFre[minFre].back().key);
-                listOfEachFre[minFre].pop_back();
-                if(listOfEachFre[minFre].size()==0){
-                    listOfEachFre.erase(minFre);
-                }
-            }
-            listOfEachFre[1].push_front(Node(key,value,1));
-            keyTable[key]=listOfEachFre[1].begin();
-            minFre=1;
-        }
-        else{
-            moveNode(key,value,keyTable[key]->fre);
-        }
-    }
-
-    void moveNode(int key,int val,int fre){//访问节点过后将其置于对应新链表头部
-        auto node=keyTable[key];
-        listOfEachFre[fre].erase(node);
-        if(listOfEachFre[fre].size()==0){
-            listOfEachFre.erase(fre);
-            if(minFre==fre)    
+        NodeIt it = keyIt->second;
+        auto& newList = freMemo[it->fre + 1];	//bug:必须引用，不能传值。
+        newList.splice(newList.begin(), freMemo[it->fre], it);
+        if (!freMemo[it->fre].size()) {
+            freMemo.erase(it->fre);
+            if (minFre == it->fre)
                 minFre++;
         }
-        listOfEachFre[fre+1].push_front(Node(key,val,fre+1));
-        keyTable[key]=listOfEachFre[fre+1].begin();
+        it->fre++;
+        return it->val;
+    }
+
+    void put(int key, int value) {
+        if (!cap)
+            return;
+        auto keyIt = keyMemo.find(key);
+        if (keyIt != keyMemo.end()) {
+            keyIt->second->val = value;
+            get(key);
+        } else {
+            if (keyMemo.size() == cap) {
+                auto tmp = freMemo[minFre].back().key;
+                keyMemo.erase(freMemo[minFre].back().key);
+                freMemo[minFre].pop_back();
+                if (freMemo[minFre].size() == 0)
+                    freMemo.erase(minFre);
+            }
+            freMemo[1].push_front({key, value, 1});
+            keyMemo[key] = freMemo[1].begin();
+            minFre = 1;
+        }
     }
 };

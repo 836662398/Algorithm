@@ -19,106 +19,131 @@ cache.get(1);       // 返回 -1 (未找到)
 cache.get(3);       // 返回  3
 cache.get(4);       // 返回  4
 
-【方法一】哈希表+双向链表list
-【思路】使用节点为pair<int,int>的双向链表list，同时用存储对应节点迭代器的哈希表来实现O(1)查询。（用pair<int,int>来代替有key,value两成员的节点Node）
+【思路】哈希表+双向链表list
+使用stl双向链表list，同时用存储对应节点迭代器的哈希表来实现O(1)查询。
 因为从哈希表中删除尾结点时，需要知道尾结点对应的key，所以链表节点必须储存key。
-class LRUCache {
-private:
-    int capacity;
-    list<pair<int,int>> mylist;
-    unordered_map<int,list<pair<int,int>>::iterator> ump;
-public:
-    LRUCache(int capacity) {
-        this->capacity=capacity;
-    }
-    int get(int key) {
-        if(ump.count(key)==0)
-            return -1;
-        auto it=ump[key];
-        //splice函数：将mylist中的it迭代器切除，加入到mylist.begin()前面
-        mylist.splice(mylist.begin(),mylist,it);//迭代器it没有改变，但是迭代器的位置变了
-        return it->second;//等价于(*it).second;注意.优先级比*高
-    }
-    void put(int key, int value) {
-        if(ump.count(key)!=0){//若已存在key
-            auto it=ump[key];
-            it->second=value;
-            mylist.splice(mylist.begin(),mylist,it);
-            return;
-        }
-        if(mylist.size()==capacity){
-            ump.erase(mylist.back().first);
-            mylist.pop_back();
-        }
-        mylist.push_front({key,value});
-        ump[key]=mylist.begin();
-    }
-};
-【方法二】哈希表+自己实现的双向链表（略复杂）
-【TIP】在双向链表实现中，可以使用一个伪头部和伪尾部两个哨兵标记界限，这样在更新的时候就不需要检查是否是 null 节点，我这边没有用，所以很麻烦。
-struct Node{
+
+struct Node {
     int key;
     int value;
-    Node* pre;
-    Node* next;
-    Node(int x,int y):key(x),value(y),pre(NULL),next(NULL){}
 };
+
 class LRUCache {
-public:
-    Node* head=nullptr;
-    Node* tail=nullptr;
-    int capacity;
-    int size=0;
-    unordered_map<int,Node*> ump;
-    LRUCache(int capacity) {
-        this->capacity=capacity;
-    }
-    void moveashead(Node* node){
-        node->pre->next=node->next;
-        if(node!=tail)
-            node->next->pre=node->pre;
-        else
-            tail=node->pre;
-        head->pre=node;
-        node->next=head;
-        node->pre=nullptr;
-        head=node;
-    }
-    
+    list<Node> ilist;
+    using nodeIt = list<Node>::iterator;
+    unordered_map<int, nodeIt> memo;
+    int cap;
+
+   public:
+    LRUCache(int capacity) { cap = capacity; }
+
     int get(int key) {
-        if(ump.count(key)==0)
-            return -1;
-        Node* node=ump[key];
-        if(node!=head)
-            moveashead(node);
-        return node->value;
+        auto it = memo.find(key);
+        if (it != memo.end()) {
+            ilist.splice(ilist.begin(), ilist, it->second);
+            return it->second->value;
+        }
+        return -1;
     }
-    
+
     void put(int key, int value) {
-        if(ump.count(key)!=0){
-            Node* node=ump[key];
-            node->value=value;
-            if(node!=head)
-                moveashead(node);
-            return;
+        auto it = memo.find(key);
+        if (it != memo.end()) {
+            ilist.splice(ilist.begin(), ilist, it->second);
+            it->second->value = value;
+        } else {
+            ilist.push_front({key, value});
+            memo.insert({key, ilist.begin()});
+            if (ilist.size() > cap) {
+                memo.erase(ilist.back().key);
+                ilist.pop_back();
+            }
         }
-        size++;
-        Node* node=new Node(key,value);
-        if(size==1)
-            tail=node;
-        ump[key]=node;
-        if(head!=nullptr){
-            node->next=head;
-            head->pre=node;
+    }
+};
+
+
+【方法二】
+自己实现双向list，本质是环形链表+哨兵end()。
+
+struct listNode {
+    int key;
+    int val;
+    shared_ptr<listNode> pre;
+    shared_ptr<listNode> next;
+    listNode() {}
+    listNode(int k, int v) : key(k), val(v) {}
+};
+
+using plistNode = shared_ptr<listNode>;
+class List {
+    plistNode end_;
+    int size_ = 0;
+
+   public:
+    List() : end_(new listNode(INT_MAX, INT_MAX)) {
+        end_->next = end_;
+        end_->pre = end_;
+    }
+    int size() { return size_; }
+    plistNode end() { return end_; }
+    plistNode begin() { return end_->next; }
+    plistNode backP() { return end_->pre; }
+    void insert(plistNode node, plistNode pos) {
+        auto p = pos->pre;
+        p->next = node;
+        node->pre = p;
+        pos->pre = node;
+        node->next = pos;
+        size_++;
+    }
+    void erase(plistNode node) {
+        assert(node != end_);
+        auto p = node->pre;
+        auto n = node->next;
+        p->next = n;
+        n->pre = p;
+        size_--;
+    }
+    void push_back(plistNode node) { insert(node, end()); }
+    void pop_back() { erase(backP()); }
+    void push_front(plistNode node) { insert(node, begin()); }
+    void pop_front() { erase(begin()); }
+    void fresh(plistNode node) {
+    	auto tmp = node;
+        erase(node);
+        push_front(tmp);
+    }
+};
+
+class LRUCache {
+    List ilist;
+    unordered_map<int, plistNode> memo;
+    int cap;
+
+   public:
+    LRUCache(int capacity) { cap = capacity; }
+    int get(int key) {
+        auto it = memo.find(key);
+        if (it != memo.end()) {
+            ilist.fresh(it->second);
+            return it->second->val;
         }
-        head=node;
-        if(size>capacity){
-            size--;
-            Node* tmp=tail;
-            tail->pre->next=nullptr;
-            tail=tail->pre;
-            ump.erase(tmp->key);
-            delete tmp;
+        return -1;
+    }
+
+    void put(int key, int value) {
+        auto it = memo.find(key);
+        if (it != memo.end()) {
+            ilist.fresh(it->second);
+            it->second->val = value;
+        } else {
+            ilist.push_front(make_shared<listNode>(key, value));
+            memo.insert({key, ilist.begin()});
+            if (ilist.size() > cap) {
+                memo.erase(ilist.backP()->key);
+                ilist.pop_back();
+            }
         }
     }
 };

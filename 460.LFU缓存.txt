@@ -51,7 +51,7 @@ class LFUCache {
         if (!cap || keyIt == keyMemo.end())
             return -1;
         NodeIt it = keyIt->second;
-        auto& newList = freMemo[it->fre + 1];	//bug:必须引用，不能传值。
+        auto& newList = freMemo[it->fre + 1];	//bug:必须引用语意，不能值语意。
         newList.splice(newList.begin(), freMemo[it->fre], it);
         if (!freMemo[it->fre].size()) {
             freMemo.erase(it->fre);
